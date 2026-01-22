@@ -2,50 +2,61 @@ import { StyleSheet } from 'react-native';
 
 export default StyleSheet.create({
   container: {
-    flex: 1,
     padding: 20,
     backgroundColor: '#fff',
-    justifyContent: 'center',
+    flexGrow: 1
   },
 
   label: {
-    fontSize: 14,
+    fontSize: 16,
+    fontWeight: '500',
     marginBottom: 6,
-    color: '#000',
+    marginTop: 14
   },
 
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#ced4da',
     borderRadius: 6,
-    padding: 12,
-    marginBottom: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 16
+  },
+
+  helperText: {
+    fontSize: 13,
+    color: '#6c757d',
+    marginTop: 6
   },
 
   button: {
-    backgroundColor: '#198754', // green like your image
+    backgroundColor: '#198754',
     paddingVertical: 12,
     borderRadius: 6,
-    width: 100,
+    marginTop: 24,
+    width: 120,
+    alignItems: 'center'
   },
 
   buttonText: {
     color: '#fff',
-    textAlign: 'center',
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '600'
   },
 
-  signupRow: {
+  loginRow: {
     flexDirection: 'row',
-    marginTop: 16,
+    marginTop: 20,
+    alignItems: 'center'
   },
 
-  signupText: {
-    color: '#000',
+  loginText: {
+    fontSize: 14
   },
 
-  signupLink: {
+  loginLink: {
+    fontSize: 14,
     color: '#0d6efd',
-    fontWeight: '500',
-  },
+    fontWeight: '500'
+  }
 });
