@@ -1,72 +1,99 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, ScrollView
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
 } from 'react-native';
+
 import { registerUser } from '../services/user';
-import styles from '../styles/authStyles';
+import styles from '../styles/homeStyles';
 
 const Signup = ({ navigation }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [phone, setPhone] = useState('');
+  const [mobile, setMobile] = useState('');
 
   const signup = async () => {
-    if (!name || !email || !password || !phone) {
-      alert('All fields are required');
+    if (!name || !email || !password || !mobile) {
+      Alert.alert('Error', 'All fields are required');
       return;
     }
 
-    const result = await registerUser(name, email, password, phone);
+    const result = await registerUser(name, email, password, mobile);
 
     if (result.status === 'success') {
-      alert('Signup Successful');
+      Alert.alert('Success', 'Signup Successful');
       navigation.navigate('Login');
     } else {
-      alert(result.error);
+      Alert.alert('Signup Failed', result.error);
     }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.label}>Name</Text>
-      <TextInput style={styles.input} onChangeText={setName} />
+      <View style={styles.authContainer}>
+        {/* Name */}
+        <Text style={styles.authLabel}>Name</Text>
+        <TextInput
+          style={styles.authInput}
+          placeholder="name"
+          placeholderTextColor="#777"
+          onChangeText={setName}
+        />
 
-      <Text style={styles.label}>Email address</Text>
-      <TextInput
-        style={styles.input}
-        keyboardType="email-address"
-        autoCapitalize="none"
-        onChangeText={setEmail}
-      />
+        {/* Email */}
+        <Text style={styles.authLabel}>Email address</Text>
+        <TextInput
+          style={styles.authInput}
+          placeholder="name@example.com"
+          placeholderTextColor="#777"
+          keyboardType="email-address"
+          autoCapitalize="none"
+          onChangeText={setEmail}
+        />
 
-      <Text style={styles.label}>Password</Text>
-      <TextInput
-        style={styles.input}
-        secureTextEntry
-        onChangeText={setPassword}
-      />
+        {/* Password */}
+        <Text style={styles.authLabel}>Password</Text>
+        <TextInput
+          style={styles.authInput}
+          placeholder="password"
+          placeholderTextColor="#777"
+          secureTextEntry
+          onChangeText={setPassword}
+        />
 
-      <Text style={styles.helperText}>
-        Your password must be 8-20 characters long, contain letters and numbers.
-      </Text>
+        {/* Helper */}
+        <Text style={styles.authHelperText}>
+          Your password must be 8-20 characters long, contain letters and numbers,
+          and must not contain spaces, special characters, or emoji.
+        </Text>
 
-      <Text style={styles.label}>Phone</Text>
-      <TextInput
-        style={styles.input}
-        keyboardType="phone-pad"
-        onChangeText={setPhone}
-      />
+        {/* Phone */}
+        <Text style={styles.authLabel}>Phone</Text>
+        <TextInput
+          style={styles.authInput}
+          placeholder="9999999999"
+          placeholderTextColor="#777"
+          keyboardType="phone-pad"
+          onChangeText={setMobile}
+        />
 
-      <TouchableOpacity style={styles.button} onPress={signup}>
-        <Text style={styles.buttonText}>Signup</Text>
-      </TouchableOpacity>
-
-      <View style={styles.loginRow}>
-        <Text>Have an account ? </Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.loginLink}>Click Here</Text>
+        {/* Signup Button */}
+        <TouchableOpacity style={styles.authButton} onPress={signup}>
+          <Text style={styles.authButtonText}>Signup</Text>
         </TouchableOpacity>
+
+        {/* Login Link */}
+        <View style={styles.authLinkRow}>
+          <Text style={styles.authLinkText}>Have an account ?</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+            <Text style={styles.authLink}> Click Here</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </ScrollView>
   );

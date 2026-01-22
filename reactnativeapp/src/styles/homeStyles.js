@@ -10,6 +10,7 @@
                 justifyContent: 'center',
                 alignItems: 'center',
             },
+            
 
             /*  SWIPE CARD  */
 
@@ -251,6 +252,124 @@
     color: '#fff',
     fontSize: 16,
     },
+/* ===== AUTH (LOGIN / SIGNUP) ===== */
+
+authContainer: {
+  width: '100%',
+},
+
+authLabel: {
+  color: '#fff',
+  fontSize: 15,
+  marginBottom: 6,
+  marginTop: 10,
+},
+
+authInput: {
+  borderWidth: 1,
+  borderColor: '#444',
+  borderRadius: 8,
+  paddingVertical: 12,
+  paddingHorizontal: 12,
+  color: '#fff',
+  fontSize: 15,
+  marginBottom: 14,
+  backgroundColor: '#000',
+},
+
+authHelperText: {
+  color: '#aaa',
+  fontSize: 13,
+  marginBottom: 14,
+  lineHeight: 18,
+},
+
+authButton: {
+  backgroundColor: '#198754',
+  paddingVertical: 14,
+  borderRadius: 8,
+  alignItems: 'center',
+  marginTop: 10,
+  marginBottom: 20,
+},
+
+authButtonText: {
+  color: '#fff',
+  fontSize: 16,
+  fontWeight: '600',
+},
+
+authLinkRow: {
+  flexDirection: 'row',
+  justifyContent: 'center',
+},
+
+authLinkText: {
+  color: '#fff',
+  fontSize: 14,
+},
+
+authLink: {
+  color: '#4da3ff',
+  fontSize: 14,
+  textDecorationLine: 'underline',
+},
+/* ===== LOGIN ===== */
+
+loginContainer: {
+  width: '100%',
+},
+
+loginLabel: {
+  color: '#fff',
+  fontSize: 15,
+  marginBottom: 6,
+  marginTop: 10,
+},
+
+loginInput: {
+  borderWidth: 1,
+  borderColor: '#444',
+  borderRadius: 8,
+  paddingVertical: 12,
+  paddingHorizontal: 12,
+  color: '#fff',
+  fontSize: 15,
+  marginBottom: 14,
+  backgroundColor: '#000',
+},
+
+loginButton: {
+  backgroundColor: '#198754',
+  paddingVertical: 14,
+  borderRadius: 8,
+  alignItems: 'center',
+  marginTop: 10,
+  marginBottom: 20,
+},
+
+loginButtonText: {
+  color: '#fff',
+  fontSize: 16,
+  fontWeight: '600',
+},
+
+loginLinkRow: {
+  flexDirection: 'row',
+  justifyContent: 'center',
+},
+
+loginLinkText: {
+  color: '#fff',
+  fontSize: 14,
+},
+
+loginLink: {
+  color: '#4da3ff',
+  fontSize: 14,
+  marginLeft: 5,
+  textDecorationLine: 'underline',
+},
 
 
             });

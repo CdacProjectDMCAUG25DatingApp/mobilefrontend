@@ -1,26 +1,32 @@
-import axios from "axios";   // ✅ correct
-import configs from "../utils/configs";
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const BASE_URL = 'http://192.168.1.27:4000'; 
 
 export const loginUser = async (email, password) => {
   try {
-    const response = await axios.post(
-      `${configs.BASEURL}/user/signin`,
-      { email, password }
-    );
+    console.log('📡 Calling backend login API');
 
-    console.log("LOGIN RESPONSE 👉", response.data);
+    const response = await axios.post(`${BASE_URL}/user/signin`, {
+      email,
+      password,
+    });
 
-    if (response.data.status === "success") {
-      await saveToken(response.data.data.token);
+    console.log('✅ Backend response:', response.data);
+
+    if (response.data.status === 'success') {
+      await AsyncStorage.setItem(
+        'token',
+        response.data.data.token
+      );
     }
 
     return response.data;
-  } catch (err) {
-    console.log("LOGIN ERROR 👉", err.response || err.message);
-
+  } catch (error) {
+    console.log('❌ Login API error:', error.message);
     return {
-      status: "error",
-      error: err.response?.data?.error || "Server not reachable",
+      status: 'error',
+      error: 'Server not reachable',
     };
   }
 };
