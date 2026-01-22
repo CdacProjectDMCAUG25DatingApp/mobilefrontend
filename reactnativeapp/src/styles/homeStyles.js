@@ -1,60 +1,63 @@
-    import { StyleSheet, Dimensions } from 'react-native';
+import { StyleSheet } from 'react-native';
 
-    const { width, height } = Dimensions.get('window');
+export default StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 
-    export default StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#000',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
+  /* ===== CARD ===== */
 
-    card: {
-        width: width * 0.8,
-        height: height * 0.65,
-        borderRadius: 20,
-        overflow: 'hidden',
-        backgroundColor: '#111',
-    },
+  card: {
+    width: '85%',
+    height: '65%',
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: '#111',
+    marginBottom: 90, // space for bottom menu
+  },
 
-    image: {
-        width: '100%',
-        height: '100%',
-        position: 'absolute',
-    },
+  image: {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+  },
 
-    overlay: {
-        position: 'absolute',
-        top: 40,
-        alignSelf: 'center',
-        alignItems: 'center',
-    },
+  /* ===== BOTTOM MENU ===== */
 
-    name: {
-        fontSize: 26,
-        color: '#fff',
-        fontWeight: '600',
-    },
+  bottomMenu: {
+    position: 'absolute',
+    bottom: 15,
+    left: 10,
+    right: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: '#000',
+  },
 
-    subtitle: {
-        fontSize: 14,
-        color: '#ccc',
-    },
+  menuButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#333',
+    backgroundColor: '#000',
+  },
 
-    infoBox: {
-        position: 'absolute',
-        bottom: 20,
-        left: 15,
-        right: 15,
-        backgroundColor: 'rgba(0,0,0,0.6)',
-        borderRadius: 15,
-        padding: 12,
-    },
+  menuButtonActive: {
+    backgroundColor: '#FFD700',
+    borderColor: '#FFD700',
+  },
 
-    infoText: {
-        color: '#fff',
-        fontSize: 13,
-        textAlign: 'center',
-    },
-    });
+  menuText: {
+    color: '#fff',
+    fontSize: 12,
+  },
+
+  menuTextActive: {
+    color: '#000',
+    fontWeight: '600',
+  },
+});
