@@ -24,10 +24,9 @@ export default function SwipeCardStack() {
     const [cards, setCards] = useState([]);
     const [index, setIndex] = useState(0);
     const [showProfile, setShowProfile] = useState(false);
-    const [deckKey, setDeckKey] = useState(0);   // ⭐ FORCE SWIPER RESET
 
+    // Fade animation
     const fadeAnim = useRef(new Animated.Value(1)).current;
-    const isSwiping = useRef(false);
 
     useEffect(() => {
         loadCards();
@@ -38,9 +37,7 @@ export default function SwipeCardStack() {
         if (!data?.length) data = await serviceGetCandidatesAgain();
 
         setCards(data);
-        setIndex(0);                 // reset index
-        setDeckKey((k) => k + 1);    // ⭐ this forces Swiper to remount fully
-        isSwiping.current = false;   // reset tap/swipe lock
+        setIndex(0);
     };
 
     const sendSwipeToBackend = async (direction, token) => {
@@ -61,65 +58,54 @@ export default function SwipeCardStack() {
     const openProfile = () => setShowProfile(true);
     const goBackToCards = () => setShowProfile(false);
 
-    // ⭐ Protect against crashes (never access invalid index)
-    const getSafeCard = (idx) =>
-        cards[Math.min(idx, cards.length - 1)] || null;
-
     return (
         <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
-
-            {/* ================= PROFILE VIEW ================= */}
             {showProfile ? (
                 <View style={{ flex: 1 }}>
                     <TouchableOpacity style={styles.backBtn} onPress={goBackToCards}>
                         <Text style={styles.backText}>← Back</Text>
                     </TouchableOpacity>
 
-                    {/* ⭐ always safe */}
-                    <ProfileView
-                        editable={false}
-                        profileData={getSafeCard(index)}
-                    />
+                    <ProfileView editable={false} profileData={cards[index]} />
                 </View>
             ) : (
-
-                /* ================= SWIPE VIEW ================= */
                 cards.length > 0 && (
                     <Swiper
-                        key={deckKey}       // ⭐ MAGIC LINE → refreshes swiper
                         cards={cards}
+                        cardIndex={index}        // ⭐ CORRECT
                         backgroundColor="black"
                         verticalSwipe={false}
                         disableTopSwipe
                         disableBottomSwipe
 
-                        onSwipedRight={(i) => {
-                            const safe = Math.min(i, cards.length - 1);
-                            sendSwipeToBackend("right", cards[safe].token);
-                        }}
-
-                        onSwipedLeft={(i) => {
-                            const safe = Math.min(i, cards.length - 1);
-                            sendSwipeToBackend("left", cards[safe].token);
-                        }}
-
+                        // ⭐ KEEP INDEX IN SYNC
                         onSwiped={(i) => {
-                            isSwiping.current = false;
-                            const safeIndex = Math.min(i + 1, cards.length - 1);
-                            setIndex(safeIndex);
+                            const next = i + 1;
+                            if (next < cards.length) {
+                                setIndex(next);
+                            }
                         }}
+
+                        onSwipedRight={(i) =>
+                            sendSwipeToBackend("right", cards[i].token)
+                        }
+
+                        onSwipedLeft={(i) =>
+                            sendSwipeToBackend("left", cards[i].token)
+                        }
 
                         onSwipedAll={async () => {
-                            await loadCards(); // ⭐ reload new deck
+                            setIndex(0);                     // reset index for new deck
+                            setCards([]);                    // clear old deck (prevents flicker)
+
+                            setTimeout(async () => {
+                                await loadCards();           // load new profiles
+                            }, 150);
                         }}
 
-                        // Tap to open profile
+                        // ⭐ TAP SHOWS CORRECT PROFILE
                         onTapCard={(i) => {
-                            if (isSwiping.current) return;
-                            isSwiping.current = true;
-
-                            const safeIndex = Math.min(i, cards.length - 1);
-                            setIndex(safeIndex);
+                            setIndex(i);
                             openProfile();
                         }}
 
@@ -131,7 +117,6 @@ export default function SwipeCardStack() {
                     />
                 )
             )}
-
         </Animated.View>
     );
 }
