@@ -1,0 +1,6 @@
+### Instapp expo 
+- npm install expo
+- npm install @react-native-picker/picker react-native-date-picker
+- npm install react-native-image-picker
+- npx pod-install
+

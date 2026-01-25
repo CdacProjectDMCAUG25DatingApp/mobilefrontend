@@ -10,7 +10,6 @@
     const { width } = Dimensions.get('window');
 
     const images = [
-    require('../../assets/photo1.jpg'),
     require('../../assets/photo2.jpg'),
     require('../../assets/photo3.jpg'),
     ];

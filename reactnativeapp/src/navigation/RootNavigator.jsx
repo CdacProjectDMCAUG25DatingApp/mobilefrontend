@@ -1,10 +1,19 @@
-    import React from 'react';
-    import AuthNavigator from './AuthNavigator';
-    import MainNavigator from './MainNavigator';
+import React from "react";
+import { NavigationContainer } from "@react-navigation/native";
 
-    const RootNavigator = () => {
-    // DIRECTLY show Auth first
-    return <AuthNavigator />;
-    };
+import AuthNavigator from "./AuthNavigator";
+import MainNavigator from "./MainNavigator";
+import { useContext } from "react";
+import { UserContext } from "./src/context/UserContext";
 
-    export default RootNavigator;
+const RootNavigator = () => {
+    const { user } = useContext(UserContext);
+
+    return (
+        <NavigationContainer>
+            {user ? <MainNavigator /> : <AuthNavigator />}
+        </NavigationContainer>
+    );
+};
+
+export default RootNavigator;

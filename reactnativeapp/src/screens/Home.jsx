@@ -1,24 +1,32 @@
-    import React, { useState } from 'react';
-    import { View } from 'react-native';
+import React, { useContext } from "react";
+import BottomTabsPager from "../components/BottomTabsPager";
+import Messages from "../screens/Messages";
+import ProfileView from "../screens/ProfileView";
+import LikesScreen from "../screens/LikesScreen";
+import Settings from "../screens/Settings";
 
-    import SwipeCard from '../components/SwipeCard';
-    import BottomMenu from '../components/BottomMenu';
-    import SettingsPanel from '../components/SettingsPanel';
-    import EditProfilePanel from '../components/EditProfilePanel';
-    import styles from '../styles/homeStyles';
+import { UserContext } from "../context/UserContext";
+import { View } from 'react-native';
+import SwipeCardStack from "../components/SwipeCardStack";
 
-    const Home = () => {
-    const [active, setActive] = useState('People');
+const Home = () => {
+  const { userDetails, photos } = useContext(UserContext);
 
-    return (
-        <View style={styles.container}>
-        {active === 'People' && <SwipeCard />}
-        {active === 'Settings' && <SettingsPanel />}
-        {active === 'Edit Profile' && <EditProfilePanel />}
-
-        <BottomMenu active={active} setActive={setActive} />
+  return (
+    <BottomTabsPager
+      tabs={["People", "Messages", "Profile", "Likes", "Settings"]}
+      screens={[
+        <View key="0" style={{ flex: 1 }}>
+          <SwipeCardStack />
         </View>
-    );
-    };
+        ,
+        <Messages />,
+        <ProfileView editable={true} />,
+        <LikesScreen />,
+        <Settings />,
+      ]}
+    />
+  );
+};
 
-    export default Home;
+export default Home;
