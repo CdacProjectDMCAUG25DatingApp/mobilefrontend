@@ -72,13 +72,13 @@ export default function SwipeCardStack() {
                 cards.length > 0 && (
                     <Swiper
                         cards={cards}
-                        cardIndex={index}        // ⭐ CORRECT
+                        cardIndex={index}      
                         backgroundColor="black"
                         verticalSwipe={false}
                         disableTopSwipe
                         disableBottomSwipe
 
-                        // ⭐ KEEP INDEX IN SYNC
+
                         onSwiped={(i) => {
                             const next = i + 1;
                             if (next < cards.length) {
