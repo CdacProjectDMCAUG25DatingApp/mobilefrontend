@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import BottomTabsPager from "../components/BottomTabsPager";
-import Messages from "../screens/Messages";
+import ChatHome from "./ChatHome.jsx";
 import ProfileView from "../screens/ProfileView";
 import LikesScreen from "../screens/LikesScreen";
 import Settings from "../screens/Settings";
@@ -14,13 +14,13 @@ const Home = () => {
 
   return (
     <BottomTabsPager
-      tabs={["People", "Messages", "Profile", "Likes", "Settings"]}
+      tabs={["People", "ChatHome", "Profile", "Likes", "Settings"]}
       screens={[
         <View key="0" style={{ flex: 1 }}>
           <SwipeCardStack />
         </View>
         ,
-        <Messages />,
+        <ChatHome />,
         <ProfileView editable={true} />,
         <LikesScreen />,
         <Settings />,

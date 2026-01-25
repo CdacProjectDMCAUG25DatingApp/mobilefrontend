@@ -1,6 +1,11 @@
 ### Instapp expo 
 - npm install expo
+- npm install @react-native-async-storage/async-storage
 - npm install @react-native-picker/picker react-native-date-picker
+- npx expo install @react-native-picker/picker
 - npm install react-native-image-picker
 - npx pod-install
-
+- npm install react-native-pager-view
+- npm install react-native-deck-swiper
+- npm install react-native-toast-message
+- npx expo install react-dom react-native-web

@@ -9,9 +9,9 @@ const config = {
   urlConverter: (url) => `${BASE}/profilePhotos/${url}`,
 
   // Get auth token from storage
-  getToken: async (tokenName) => {
+  getToken: async (key) => {
     try {
-      return await AsyncStorage.getItem(tokenName);
+      return await AsyncStorage.getItem(key);
     } catch (err) {
       console.log("Error reading token:", err);
       return null;
