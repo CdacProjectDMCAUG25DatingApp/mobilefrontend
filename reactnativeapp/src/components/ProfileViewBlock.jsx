@@ -3,8 +3,8 @@ import React, { useEffect, useState, useContext } from "react";
 import {
   View,
   Text,
-  StyleSheet,
   TextInput,
+  StyleSheet,
   TouchableOpacity,
 } from "react-native";
 
@@ -12,10 +12,10 @@ import axios from "axios";
 import config from "../services/config";
 import MySelect from "./MySelect";
 import PhotoInput from "./PhotoInput";
-import DatePicker from "react-native-date-picker";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { UserContext } from "../context/UserContext";
 
-const ProfileViewBlock = ({ dataObj, photos, editable, index }) => {
+export default function ProfileViewBlock({ dataObj, photos, editable, index }) {
   const { setPhotos, setUserDetails } = useContext(UserContext);
 
   const [profile, setProfile] = useState({});
@@ -23,37 +23,51 @@ const ProfileViewBlock = ({ dataObj, photos, editable, index }) => {
   const [dirty, setDirty] = useState({});
   const [showDobPicker, setShowDobPicker] = useState(false);
 
+  /* ---------------- LOOKUPS ---------------- */
+
   const endpoints = [
-    "job-industry", "lookingfor", "lovestyle", "mother-tongue", "familyplan",
-    "drinking", "education", "communicationstyle", "opento",
-    "personalitytype", "pet", "religion", "sleepingHabit",
-    "workout", "zodiac", "smoking", "dietary", "gender",
+    "job-industry",
+    "lookingfor",
+    "lovestyle",
+    "mother-tongue",
+    "familyplan",
+    "drinking",
+    "education",
+    "communicationstyle",
+    "opento",
+    "personalitytype",
+    "pet",
+    "religion",
+    "sleepingHabit",
+    "workout",
+    "zodiac",
+    "smoking",
+    "dietary",
+    "gender",
   ];
 
   const [lookups, setLookups] = useState({});
 
-  // Load dropdowns ONCE
   useEffect(() => {
-    const load = async () => {
+    (async () => {
       const token = await config.getToken("token");
       const headers = { token };
 
-      const reqs = endpoints.map((e) =>
+      const req = endpoints.map((e) =>
         axios.get(`${config.BASE_URL}/api/${e}`, { headers })
       );
 
-      const res = await Promise.all(reqs);
+      const res = await Promise.all(req);
 
       const map = {};
       endpoints.forEach((e, i) => (map[e] = res[i].data.data));
 
       setLookups(map);
-    };
-
-    load();
+    })();
   }, []);
 
-  // Map keys
+  /* ------------ KEY → LOOKUP MAPPING ---------- */
+
   const dropdownMap = {
     job_industry: lookups["job-industry"],
     looking_for: lookups["lookingfor"],
@@ -75,37 +89,37 @@ const ProfileViewBlock = ({ dataObj, photos, editable, index }) => {
     preferred_gender: lookups["gender"],
   };
 
-  // Init block when lookups ready
+
+  /* ---------------- INIT MERGE ---------------- */
+
   useEffect(() => {
+    if (!dataObj) return;
+
     const merged = {
       ...dataObj,
       image_prompt: photos?.[index]?.prompt || "",
     };
 
-    // name → id conversion
-    Object.entries(dropdownMap).forEach(([key, list]) => {
-      if (list && typeof merged[key] === "string") {
-        const found = list.find((i) => i.name === merged[key]);
-        if (found) merged[key] = found.id;
-      }
-    });
-
-    setProfile(merged);
     setOriginal(merged);
+    setProfile(merged);
     setDirty({});
   }, [dataObj, photos, lookups]);
 
-  const handleChange = (key, v) => {
-    setProfile((p) => ({ ...p, [key]: v }));
+  /* ---------------- HANDLE CHANGE ---------------- */
 
-    if (original[key] !== v) {
-      setDirty((d) => ({ ...d, [key]: v }));
+  const handleChange = (key, value) => {
+    setProfile((p) => ({ ...p, [key]: value }));
+
+    if (original[key] !== value) {
+      setDirty((d) => ({ ...d, [key]: value }));
     } else {
-      const c = { ...dirty };
-      delete c[key];
-      setDirty(c);
+      const copy = { ...dirty };
+      delete copy[key];
+      setDirty(copy);
     }
   };
+
+  /* ---------------- UPDATE SECTION ---------------- */
 
   const updateSection = async () => {
     if (!Object.keys(dirty).length) return;
@@ -113,28 +127,48 @@ const ProfileViewBlock = ({ dataObj, photos, editable, index }) => {
     const token = await config.getToken("token");
     const headers = { token };
 
-    const profileFields = [
-      "bio", "height", "weight", "gender", "tagline",
-      "dob", "marital_status", "location",
-      "mother_tongue", "religion", "education",
+    const basicProfileKeys = [
+      "bio",
+      "height",
+      "weight",
+      "gender",
+      "tagline",
+      "dob",
+      "marital_status",
+      "location",
+      "mother_tongue_id",
+      "religion_id",
+      "education_id",
       "job_industry_id",
     ];
 
-    const p1 = {};
-    const p2 = {};
+    const personalKeys = Object.keys(dirty).filter(
+      (k) => !basicProfileKeys.includes(k)
+    );
+
+    const mainProfilePayload = {};
+    const detailsPayload = {};
 
     Object.entries(dirty).forEach(([k, v]) => {
-      if (profileFields.includes(k)) p1[k] = v;
-      else p2[k] = v;
+      if (basicProfileKeys.includes(k)) {
+        mainProfilePayload[k] = v;
+      } else {
+        detailsPayload[k] = v;
+      }
     });
 
-    if (Object.keys(p1).length)
-      await axios.patch(`${config.BASE_URL}/user/profile`, p1, { headers });
+    if (Object.keys(mainProfilePayload).length)
+      await axios.patch(`${config.BASE_URL}/user/profile`, mainProfilePayload, {
+        headers,
+      });
 
-    if (Object.keys(p2).length)
-      await axios.patch(`${config.BASE_URL}/user/userdetails`, p2, { headers });
+    if (Object.keys(detailsPayload).length)
+      await axios.patch(`${config.BASE_URL}/user/userdetails`, detailsPayload, {
+        headers,
+      });
 
-    if (dirty.image_prompt !== undefined) {
+    // Update image prompt separately
+    if (dirty.image_prompt !== undefined && photos?.[index]?.photo_id) {
       await axios.patch(
         `${config.BASE_URL}/user/photo/prompt`,
         {
@@ -144,6 +178,7 @@ const ProfileViewBlock = ({ dataObj, photos, editable, index }) => {
         { headers }
       );
 
+      // update context
       setPhotos((prev) => {
         const arr = [...prev];
         arr[index] = { ...arr[index], prompt: dirty.image_prompt };
@@ -156,183 +191,189 @@ const ProfileViewBlock = ({ dataObj, photos, editable, index }) => {
     setDirty({});
   };
 
+  /* ---------------- UI RENDER ---------------- */
+
   return (
-    <View style={styles.blockContainer}>
-      <View style={styles.photoCard}>
-        <PhotoInput imageUrl={config.urlConverter(photos?.[index]?.photo_url)} />
+    <View style={styles.block}>
+      {/* PHOTO */}
+      <View style={styles.photoBox}>
+        <PhotoInput
+          imageUrl={config.urlConverter(photos?.[index]?.photo_url)}
+          editable={false}
+        />
       </View>
 
+      {/* IMAGE PROMPT */}
       {(editable || profile.image_prompt) && (
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Image Prompt</Text>
+          <Text style={styles.label}>Image Prompt</Text>
           <TextInput
+            style={styles.inputMultiline}
             multiline
-            style={styles.textArea}
-            value={profile.image_prompt}
             editable={editable}
+            value={profile.image_prompt}
             onChangeText={(t) => handleChange("image_prompt", t)}
           />
         </View>
       )}
 
+      {/* ALL OTHER FIELDS */}
       {Object.entries(profile)
-        .filter(([k]) => k !== "image_prompt")
-        .map(([k, v]) => {
-          if (k === "dob")
+        .filter(([key]) => key !== "image_prompt")
+        .map(([key, value]) => {
+          /* DOB FIELD */
+          if (key === "dob") {
             return (
-              <View key={k} style={styles.section}>
-                <Text style={styles.sectionLabel}>Date of Birth</Text>
+              <View key={key} style={styles.section}>
+                <Text style={styles.label}>Date of Birth</Text>
+
                 {editable ? (
                   <>
                     <TouchableOpacity
+                      style={styles.dateBox}
                       onPress={() => setShowDobPicker(true)}
-                      style={styles.selectorBox}
                     >
-                      <Text style={styles.selectorText}>
-                        {v ? new Date(v).toDateString() : "Select Date"}
+                      <Text style={styles.valueText}>
+                        {value
+                          ? new Date(value).toDateString()
+                          : "Select Date"}
                       </Text>
                     </TouchableOpacity>
 
-                    <DatePicker
-                      modal
-                      open={showDobPicker}
-                      date={v ? new Date(v) : new Date()}
-                      mode="date"
-                      onConfirm={(d) => {
-                        setShowDobPicker(false);
-                        handleChange("dob", d.toISOString());
-                      }}
-                      onCancel={() => setShowDobPicker(false)}
-                    />
+                    {showDobPicker && (
+                      <DateTimePicker
+                        value={value ? new Date(value) : new Date()}
+                        mode="date"
+                        display="default"
+                        onChange={(e, d) => {
+                          setShowDobPicker(false);
+                          if (d) handleChange("dob", d.toISOString().slice(0, 10));
+                        }}
+                      />
+                    )}
                   </>
                 ) : (
-                  <Text style={styles.readonlyText}>
-                    {v ? new Date(v).toDateString() : "Not Set"}
+                  <Text style={styles.valueText}>
+                    {value ? new Date(value).toDateString() : "Not set"}
                   </Text>
                 )}
               </View>
             );
+          }
 
-          if (dropdownMap[k])
+          /* DROPDOWN FIELDS */
+          if (dropdownMap[key]) {
             return (
-              <View key={k} style={styles.section}>
+              <View key={key} style={styles.section}>
                 <MySelect
-                  label={k.replace(/_/g, " ")}
-                  value={v}
-                  options={dropdownMap[k]}
+                  label={key.replace(/_/g, " ").replace("id", "")}
+                  value={value}
+                  options={dropdownMap[key]}
                   noDropdown={!editable}
-                  onChange={(id) => handleChange(k, id)}
+                  onChange={(v) => handleChange(key, v)}
                 />
               </View>
             );
+          }
 
+          /* NORMAL TEXT FIELD */
           return (
-            <View key={k} style={styles.section}>
-              <Text style={styles.sectionLabel}>{k.replace(/_/g, " ")}</Text>
+            <View key={key} style={styles.section}>
+              <Text style={styles.label}>{key.replace(/_/g, " ")}</Text>
               <TextInput
                 style={styles.input}
-                value={v || ""}
                 editable={editable}
-                onChangeText={(t) => handleChange(k, t)}
+                value={value?.toString() || ""}
+                onChangeText={(t) => handleChange(key, t)}
               />
             </View>
           );
         })}
 
+      {/* ACTION BUTTONS */}
       {editable && Object.keys(dirty).length > 0 && (
         <View style={styles.actionRow}>
           <TouchableOpacity
-            style={[styles.actionButton, styles.cancelButton]}
+            style={[styles.btn, styles.cancelBtn]}
             onPress={() => {
               setProfile(original);
               setDirty({});
             }}
           >
-            <Text style={styles.actionText}>Cancel</Text>
+            <Text style={styles.btnText}>Cancel</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.actionButton, styles.updateButton]}
+            style={[styles.btn, styles.updateBtn]}
             onPress={updateSection}
           >
-            <Text style={styles.actionText}>Update</Text>
+            <Text style={styles.btnText}>Update</Text>
           </TouchableOpacity>
         </View>
       )}
     </View>
   );
-};
+}
 
-export default ProfileViewBlock;
-
-// styles unchanged
-
-/* ==================== STYLES ==================== */
+/* ---------------- STYLES ---------------- */
 
 const styles = StyleSheet.create({
-  blockContainer: {
-    backgroundColor: "#121212",
+  block: {
+    backgroundColor: "#111",
     padding: 18,
     borderRadius: 14,
-    marginBottom: 26,
+    marginBottom: 25,
     borderColor: "#222",
     borderWidth: 1,
   },
 
-  photoCard: {
+  photoBox: {
     width: "100%",
     height: 420,
     borderRadius: 14,
     overflow: "hidden",
     marginBottom: 18,
-    justifyContent: "center",
-    alignItems: "center",
     backgroundColor: "#1c1c1c",
+
+    justifyContent: "center",   // centers vertically
+    alignItems: "center",       // centers horizontally
   },
+
 
   section: {
-    marginBottom: 18,
+    marginBottom: 20,
   },
 
-  sectionLabel: {
-    color: "#bbb",
-    marginBottom: 6,
+  label: {
+    color: "#888",
+    marginBottom: 5,
     fontSize: 14,
-    textTransform: "capitalize",
   },
 
   input: {
-    backgroundColor: "#1d1d1d",
+    backgroundColor: "#1c1c1c",
     color: "white",
     padding: 12,
     borderRadius: 10,
-    fontSize: 15,
   },
 
-  textArea: {
-    backgroundColor: "#1d1d1d",
+  inputMultiline: {
+    backgroundColor: "#1c1c1c",
     color: "white",
     padding: 12,
     borderRadius: 10,
     minHeight: 120,
     textAlignVertical: "top",
-    fontSize: 15,
   },
 
-  readonlyText: {
-    color: "#ddd",
-    fontSize: 15,
-    paddingVertical: 8,
-  },
-
-  selectorBox: {
-    backgroundColor: "#1d1d1d",
+  dateBox: {
+    backgroundColor: "#1c1c1c",
     padding: 12,
     borderRadius: 10,
   },
 
-  selectorText: {
-    color: "white",
+  valueText: {
+    color: "#ddd",
     fontSize: 15,
   },
 
@@ -342,7 +383,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 
-  actionButton: {
+  btn: {
     flex: 1,
     padding: 14,
     borderRadius: 10,
@@ -350,15 +391,15 @@ const styles = StyleSheet.create({
     marginHorizontal: 4,
   },
 
-  cancelButton: {
+  cancelBtn: {
     backgroundColor: "#444",
   },
 
-  updateButton: {
+  updateBtn: {
     backgroundColor: "#28a745",
   },
 
-  actionText: {
+  btnText: {
     color: "white",
     fontWeight: "600",
     fontSize: 16,

@@ -1,11 +1,18 @@
 ### Instapp expo 
-- npm install expo
-- npm install @react-native-async-storage/async-storage
-- npm install @react-native-picker/picker react-native-date-picker
-- npx expo install @react-native-picker/picker
-- npm install react-native-image-picker
-- npx pod-install
-- npm install react-native-pager-view
-- npm install react-native-deck-swiper
-- npm install react-native-toast-message
-- npx expo install react-dom react-native-web
+npm install expo
+npm install @react-native-async-storage/async-storage
+npx expo install @react-native-picker/picker
+npx expo install expo-image-picker
+npx expo install @react-native-community/datetimepicker
+npm install react-native-pager-view
+npm install react-native-deck-swiper
+npm install react-native-toast-message
+npx expo install react-dom react-native-web
+npm install socket.io-client
+npm install axios
+
+
+### useIsFocused()
+In React Native navigation, the hook for checking if a screen is focused is called useIsFocused. It returns a boolean value (true if the screen is focused, false otherwise). 
+Usage
+The useIsFocused hook is used for conditionally rendering elements based on the screen's focus state, such as displaying different content or status bar configurations. 

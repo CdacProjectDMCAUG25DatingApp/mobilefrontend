@@ -25,7 +25,6 @@ export default function SwipeCardStack() {
     const [index, setIndex] = useState(0);
     const [showProfile, setShowProfile] = useState(false);
 
-    // Fade animation
     const fadeAnim = useRef(new Animated.Value(1)).current;
 
     useEffect(() => {
@@ -62,53 +61,44 @@ export default function SwipeCardStack() {
         <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
             {showProfile ? (
                 <View style={{ flex: 1 }}>
-                    <TouchableOpacity style={styles.backBtn} onPress={goBackToCards}>
-                        <Text style={styles.backText}>← Back</Text>
-                    </TouchableOpacity>
-
-                    <ProfileView editable={false} profileData={cards[index]} />
+                    <ProfileView
+                        editable={false}
+                        profileData={cards[index]}
+                        showMenu={true}             // ⭐ SHOW MENU
+                        onBack={goBackToCards}      // ⭐ BACK BUTTON HANDLER
+                    />
                 </View>
             ) : (
                 cards.length > 0 && (
                     <Swiper
                         cards={cards}
-                        cardIndex={index}      
+                        cardIndex={index}
                         backgroundColor="black"
                         verticalSwipe={false}
                         disableTopSwipe
                         disableBottomSwipe
-
-
                         onSwiped={(i) => {
                             const next = i + 1;
-                            if (next < cards.length) {
-                                setIndex(next);
-                            }
+                            if (next < cards.length) setIndex(next);
                         }}
-
                         onSwipedRight={(i) =>
                             sendSwipeToBackend("right", cards[i].token)
                         }
-
                         onSwipedLeft={(i) =>
                             sendSwipeToBackend("left", cards[i].token)
                         }
-
                         onSwipedAll={async () => {
-                            setIndex(0);                     // reset index for new deck
-                            setCards([]);                    // clear old deck (prevents flicker)
+                            setIndex(0);
+                            setCards([]);
 
                             setTimeout(async () => {
-                                await loadCards();           // load new profiles
+                                await loadCards();
                             }, 150);
                         }}
-
-                        // ⭐ TAP SHOWS CORRECT PROFILE
                         onTapCard={(i) => {
                             setIndex(i);
                             openProfile();
                         }}
-
                         renderCard={(card) => (
                             <View style={{ width: "100%", height: "100%" }}>
                                 <BasicCard candidate={card} />
@@ -125,15 +115,5 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#000",
-    },
-    backBtn: {
-        padding: 14,
-        marginTop: 45,
-        marginLeft: 16,
-    },
-    backText: {
-        color: "white",
-        fontSize: 20,
-        fontWeight: "500",
     },
 });

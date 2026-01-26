@@ -78,7 +78,7 @@ const Login = ({ navigation }) => {
         return navigation.replace("AddPhotos");
 
       if (!prefRes.data.data.length)
-        return navigation.replace("UserPreferences");
+        return navigation.replace("UserPreferencaes");
 
       // ALL SET → GO TO HOME
       navigation.reset({
