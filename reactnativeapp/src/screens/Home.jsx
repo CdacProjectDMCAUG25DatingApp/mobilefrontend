@@ -1,5 +1,6 @@
 import React, { useContext, useEffect } from "react";
 import { View } from "react-native";
+import { Platform } from "react-native";
 import { useIsFocused } from "@react-navigation/native";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -56,21 +57,21 @@ const Home = () => {
   // ------------------------------------------------------------------
 
   return (
+
     <BottomTabsPager
+      swipeEnabled={Platform.OS === "android"}
       tabs={["People", "ChatHome", "Profile", "Likes", "Settings"]}
       screens={[
         <View key="0" style={{ flex: 1 }}>
           <SwipeCardStack />
         </View>,
-
         <ChatHome />,
-
-        <ProfileView editable={true} />
-        ,
+        <ProfileView editable={true} />,
         <LikesScreen />,
         <Settings />,
       ]}
     />
+
   );
 };
 

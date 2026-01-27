@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const BASE = "http://10.147.93.51:4000";
+const BASE = "http://10.188.53.253:4000";
 
 const config = {
   BASE_URL: BASE,

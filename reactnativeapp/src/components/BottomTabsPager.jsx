@@ -15,6 +15,7 @@ const BottomTabsPager = ({ tabs, screens }) => {
     <View style={{ flex: 1 }}>
       {/* ===== MAIN PAGER ===== */}
       <PagerView
+        scrollEnabled={false}
         ref={pagerRef}
         style={{ flex: 1 }}
         initialPage={0}
