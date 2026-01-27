@@ -11,6 +11,7 @@ import {
 
 import axios from "axios";
 import config from "../services/config";
+import LikeCard from "../components/LikeCard";
 
 export default function BlockedUsersModal({ visible, onClose }) {
   const [loading, setLoading] = useState(true);
@@ -24,6 +25,7 @@ export default function BlockedUsersModal({ visible, onClose }) {
       const r = await axios.get(config.BASE_URL + "/settings/blocked-list", {
         headers: { token },
       });
+
       setBlockedUsers(r.data.data || []);
     } catch (err) {
       console.log("Blocked list error:", err);
@@ -39,8 +41,8 @@ export default function BlockedUsersModal({ visible, onClose }) {
         headers: { token },
       });
 
-      // Refresh list
-      loadBlockedUsers();
+      // Update UI instantly
+      setBlockedUsers((p) => p.filter((u) => u.blocked_id !== uid));
     } catch (err) {
       console.log("Unblock error:", err);
     }
@@ -61,18 +63,21 @@ export default function BlockedUsersModal({ visible, onClose }) {
           ) : blockedUsers.length === 0 ? (
             <Text style={styles.empty}>No blocked users</Text>
           ) : (
-            <ScrollView style={{ maxHeight: 300 }}>
-              {blockedUsers.map((user) => (
-                <View key={user.block_id} style={styles.userRow}>
-                  <Text style={styles.userName}>{user.user_name}</Text>
-
-                  <TouchableOpacity
-                    style={styles.unblockBtn}
-                    onPress={() => unblockUser(user.blocked_id)}
-                  >
-                    <Text style={styles.unblockText}>Unblock</Text>
-                  </TouchableOpacity>
-                </View>
+            <ScrollView style={{ maxHeight: 450 }}>
+              {blockedUsers.map((u) => (
+                <LikeCard
+                  key={u.block_id}
+                  user={{
+                    user_name: u.user_name,
+                    uid: u.blocked_id,
+                    photo_url: u.photo_url,
+                    dob: u.dob,
+                    gender: u.gender,
+                    tagline: u.tagline,
+                  }}
+                  showRemove={true}
+                  onRemove={() => unblockUser(u.blocked_id)}
+                />
               ))}
             </ScrollView>
           )}
@@ -95,9 +100,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   box: {
-    width: "85%",
+    width: "88%",
     backgroundColor: "#151515",
-    padding: 20,
+    padding: 18,
     borderRadius: 14,
     borderWidth: 1,
     borderColor: "#333",
@@ -115,30 +120,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginVertical: 30,
   },
-  userRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#333",
-  },
-  userName: {
-    color: "#fff",
-    fontSize: 16,
-  },
-  unblockBtn: {
-    backgroundColor: "#d9534f",
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-  unblockText: {
-    color: "#fff",
-    fontSize: 14,
-    fontWeight: "600",
-  },
   closeBtn: {
-    marginTop: 20,
+    marginTop: 15,
     padding: 12,
     borderRadius: 10,
     backgroundColor: "#444",
