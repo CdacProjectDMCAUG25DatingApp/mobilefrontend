@@ -64,8 +64,8 @@ export default function SwipeCardStack() {
                     <ProfileView
                         editable={false}
                         profileData={cards[index]}
-                        showMenu={true}             // ⭐ SHOW MENU
-                        onBack={goBackToCards}      // ⭐ BACK BUTTON HANDLER
+                        showMenu={true}             
+                        onBack={goBackToCards}      
                     />
                 </View>
             ) : (

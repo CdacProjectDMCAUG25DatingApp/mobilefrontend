@@ -9,6 +9,7 @@ import {
 
 import ChangePasswordModal from "../components/ChangePasswordModal";
 import FeedbackModal from "../components/FeedbackModal";
+import BlockedUsersModal from "../components/BlockedUsersModal";  // ✅ NEW
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
@@ -16,12 +17,12 @@ import { useNavigation } from "@react-navigation/native";
 export default function Settings() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [showBlockedModal, setShowBlockedModal] = useState(false); // ✅ NEW
 
   const navigation = useNavigation();
 
   const handleLogout = async () => {
     await AsyncStorage.clear();
-
     Alert.alert("Logged Out", "You have been logged out", [
       {
         text: "OK",
@@ -36,13 +37,10 @@ export default function Settings() {
 
   return (
     <View style={styles.container}>
-
-      {/* TITLE */}
       <Text style={styles.title}>Settings</Text>
 
-      {/* CARD BOX */}
       <View style={styles.card}>
-
+        
         <TouchableOpacity
           style={styles.option}
           onPress={() => setShowPasswordModal(true)}
@@ -55,6 +53,14 @@ export default function Settings() {
           onPress={() => setShowFeedbackModal(true)}
         >
           <Text style={styles.optionText}>Feedback</Text>
+        </TouchableOpacity>
+
+        {/* ✅ NEW BLOCKED USERS OPTION */}
+        <TouchableOpacity
+          style={styles.option}
+          onPress={() => setShowBlockedModal(true)}
+        >
+          <Text style={styles.optionText}>Blocked Users</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -77,9 +83,16 @@ export default function Settings() {
         onClose={() => setShowFeedbackModal(false)}
       />
 
+      {/* ✅ NEW MODAL */}
+      <BlockedUsersModal
+        visible={showBlockedModal}
+        onClose={() => setShowBlockedModal(false)}
+      />
+
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

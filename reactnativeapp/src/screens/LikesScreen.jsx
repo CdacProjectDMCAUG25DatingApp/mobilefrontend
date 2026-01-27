@@ -166,14 +166,10 @@ export default function LikesScreen() {
   if (showProfile && profileData) {
     return (
       <View style={{ flex: 1, backgroundColor: "#000" }}>
-        <TouchableOpacity
-          style={{ padding: 14, marginTop: 45, marginLeft: 16 }}
-          onPress={() => setShowProfile(false)}
-        >
-          <Text style={{ color: "white", fontSize: 20 }}>← Back</Text>
-        </TouchableOpacity>
-
-        <ProfileView editable={false} profileData={profileData} />
+        <ProfileView editable={false} 
+        profileData={profileData} 
+        onBack={() => setShowProfile(false)}
+        />
       </View>
     );
   }

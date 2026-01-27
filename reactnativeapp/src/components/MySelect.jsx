@@ -31,7 +31,7 @@ const MySelect = ({ label, value, options = [], noDropdown, onChange }) => {
             style={styles.picker}
             dropdownIconColor="white"
           >
-            <Picker.Item label="Select" value="" />
+            {!value && <Picker.Item label="Select" value="" />}
             {options.map((opt) => (
               <Picker.Item key={opt.id} label={opt.name} value={opt.id} />
             ))}

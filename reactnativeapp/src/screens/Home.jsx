@@ -64,7 +64,9 @@ const Home = () => {
         </View>,
 
         <ChatHome />,
-        <ProfileView editable={true} />,
+
+        <ProfileView editable={true} />
+        ,
         <LikesScreen />,
         <Settings />,
       ]}

@@ -8,103 +8,155 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 
 import { Ionicons } from "@expo/vector-icons";
-import { Menu, MenuOptions, MenuOption, MenuTrigger } from "react-native-popup-menu";
-
+import axios from "axios";
+import config from "../services/config";
 import { UserContext } from "../context/UserContext";
+
 import PhotoInput from "../components/PhotoInput";
 import MySelect from "../components/MySelect";
 import ProfileViewBlock from "../components/ProfileViewBlock";
-import config from "../services/config";
-import axios from "axios";
 
-const ProfileView = ({ editable, profileData, showMenu, onBack }) => {
-  const [reportVisible, setReportVisible] = useState(false);
-  const [reason, setReason] = useState(null);
-  const [customReason, setCustomReason] = useState("");
+import {
+  Menu,
+  MenuOptions,
+  MenuTrigger,
+  MenuOption,
+} from "react-native-popup-menu";
 
+import Toast from "react-native-toast-message";
+
+const ProfileView = ({ editable, profileData, onBack }) => {
   const { userDetails, photos, setPhotos } = useContext(UserContext);
 
   const finalData = profileData?.candidateData || userDetails;
   const finalPhotos = profileData?.photos || photos;
-
-  if (!finalData || !finalPhotos?.length) return null;
 
   const [genderList, setGenderList] = useState([]);
   const [profile, setProfile] = useState({});
   const [original, setOriginal] = useState({});
   const [dirty, setDirty] = useState({});
 
-  // Fetch Gender
+  // -------- REPORT MODAL STATE --------
+  const [reportVisible, setReportVisible] = useState(false);
+  const [reason, setReason] = useState(null);
+  const [customReason, setCustomReason] = useState("");
+  const [reportReasons, setReportReasons] = useState([]);
+
+  // FETCH REPORT REASONS (NO HARDCODED OTHER)
   useEffect(() => {
-    const init = async () => {
-      const token = await config.getToken("token");
-      const r = await axios.get(config.BASE_URL + "/api/gender", {
-        headers: { token },
-      });
-      setGenderList(r.data.data);
-    };
-    init();
+    (async () => {
+      try {
+        const token = await config.getToken("token");
+        const res = await axios.get(config.BASE_URL + "/api/report-reasons", {
+          headers: { token },
+        });
+
+        // ONLY USE BACKEND VALUES
+        setReportReasons(res.data.data);
+      } catch (e) {
+        console.log("Failed to load report reasons");
+      }
+    })();
   }, []);
 
-  // Load profile data
-  useEffect(() => {
-    if (!genderList.length) return;
+  // BLOCK USER
+  const handleBlock = async () => {
+    try {
+      const token = await config.getToken("token");
+      await axios.post(
+        config.BASE_URL + "/settings/block",
+        { blocked_id: profileData?.token || finalData?.token, },  // THIS IS THE CORRECT JWT
+        { headers: { token } }
+      );
 
-    const merged = {
-      ...finalData,
-      image_prompt: finalPhotos[0]?.prompt || "",
-    };
-
-    if (typeof merged.gender === "string") {
-      const found = genderList.find((g) => g.name === merged.gender);
-      if (found) merged.gender = found.id;
+      Toast.show({ type: "success", text1: "User Blocked" });
+    } catch (err) {
+      console.log("Block failed:", err?.response?.data || err);
+      Toast.show({ type: "error", text1: "Failed to block user" });
     }
+  };
 
-    setProfile(merged);
-    setOriginal(merged);
-    setDirty({});
-  }, [finalData, genderList]);
 
-  // Submit Report API
+  // SUBMIT REPORT
   const submitReport = async () => {
     if (!reason) return;
 
-    const token = await config.getToken("token");
-    await axios.post(
-      config.BASE_URL + "/settings/report",
-      {
-        reported_id: finalData?.id,
-        reason_id: reason,
-        reason_custom: reason === 99 ? customReason : null,
-      },
-      { headers: { token } }
-    );
+    try {
+      const token = await config.getToken("token");
+
+      await axios.post(
+        config.BASE_URL + "/settings/report",
+        {
+          reported_id: profileData?.token || finalData?.token,
+          reason_id: reason,
+          reason_custom: reason === 99 ? customReason : null,
+        },
+        { headers: { token } }
+      );
+
+      Toast.show({ type: "success", text1: "User Reported" });
+    } catch (err) {
+      Toast.show({ type: "error", text1: "Failed to report" });
+    }
 
     setReportVisible(false);
     setReason(null);
     setCustomReason("");
   };
 
-  // Block API
-  const blockUser = async () => {
-    const token = await config.getToken("token");
-
-    await axios.post(
-      config.BASE_URL + "/user/block",
-      { blocked_id: finalData?.id },
-      { headers: { token } }
-    );
+  // MENU STYLES
+  const menuStyles = {
+    optionsContainer: {
+      backgroundColor: "#1c1c1c",
+      borderRadius: 6,
+      width: 140,
+      paddingVertical: 6,
+    },
+    optionText: {
+      color: "white",
+      padding: 10,
+      fontSize: 15,
+    },
   };
 
-  // Handle Inputs
-  const handleChange = (key, val) => {
-    setProfile((p) => ({ ...p, [key]: val }));
+  // LOAD GENDERS
+  useEffect(() => {
+    (async () => {
+      try {
+        const t = await config.getToken("token");
+        const res = await axios.get(config.BASE_URL + "/api/gender", {
+          headers: { token: t },
+        });
+        setGenderList(res.data.data);
+      } catch { }
+    })();
+  }, []);
 
-    if (original[key] !== val) {
-      setDirty((d) => ({ ...d, [key]: val }));
+  // LOAD USER MERGED PROFILE
+  useEffect(() => {
+    if (!finalData) return;
+
+    const merged = {
+      ...finalData,
+      image_prompt: finalPhotos?.[0]?.prompt || "",
+    };
+
+    setProfile(merged);
+    setOriginal(merged);
+    setDirty({});
+  }, [finalData]);
+
+  // HANDLE TEXT CHANGE
+  const handleChange = (key, value) => {
+    setProfile((p) => ({ ...p, [key]: value }));
+
+    if (original[key] !== value) {
+      setDirty((d) => ({ ...d, [key]: value }));
     } else {
       const copy = { ...dirty };
       delete copy[key];
@@ -112,14 +164,15 @@ const ProfileView = ({ editable, profileData, showMenu, onBack }) => {
     }
   };
 
-  // SAVE Update API
+
+  // UPDATE PROFILE
   const handleUpdate = async () => {
     if (!Object.keys(dirty).length) return;
 
     const token = await config.getToken("token");
     const headers = { token };
 
-    const fields = [
+    const profileFields = [
       "bio",
       "height",
       "weight",
@@ -136,19 +189,17 @@ const ProfileView = ({ editable, profileData, showMenu, onBack }) => {
 
     const prefMap = {
       looking_for: "looking_for_id",
-      preferred_gender: "preferred_gender_id",
       open_to: "open_to_id",
       zodiac: "zodiac_id",
       family_plan: "family_plan_id",
-      education: "education_id",
-      communication_style: "communication_style_id",
-      love_style: "love_style_id",
+      preferred_gender: "preferred_gender_id",
       drinking: "drinking_id",
       smoking: "smoking_id",
       workout: "workout_id",
       dietary: "dietary_id",
       sleeping_habit: "sleeping_habit_id",
-      religion: "religion_id",
+      love_style: "love_style_id",
+      communication_style: "communication_style_id",
       personality_type: "personality_type_id",
       pet: "pet_id",
     };
@@ -156,115 +207,203 @@ const ProfileView = ({ editable, profileData, showMenu, onBack }) => {
     const p1 = {};
     const p2 = {};
 
-    Object.entries(dirty).forEach(([key, val]) => {
-      if (fields.includes(key)) p1[key] = val;
-      else if (prefMap[key]) p2[prefMap[key]] = val;
-    });
-
-    if (Object.keys(p1).length)
-      await axios.patch(config.BASE_URL + "/user/profile", p1, { headers });
-
-    if (Object.keys(p2).length)
-      await axios.patch(config.BASE_URL + "/user/userdetails", p2, { headers });
-
-    if (dirty.image_prompt !== undefined) {
-      await axios.patch(
-        config.BASE_URL + "/user/photo/prompt",
-        {
-          photo_id: finalPhotos[0]?.photo_id,
-          prompt: dirty.image_prompt,
-        },
-        { headers }
-      );
-
-      setPhotos((prev) => {
-        const arr = [...prev];
-        arr[0] = { ...arr[0], prompt: dirty.image_prompt };
-        return arr;
-      });
+    for (const [key, value] of Object.entries(dirty)) {
+      if (profileFields.includes(key)) p1[key] = value;
+      else if (prefMap[key]) p2[prefMap[key]] = value;
     }
 
-    setOriginal(profile);
-    setDirty({});
+    try {
+      if (Object.keys(p1).length)
+        await axios.patch(config.BASE_URL + "/user/profile", p1, { headers });
+
+      if (Object.keys(p2).length)
+        await axios.patch(config.BASE_URL + "/user/userdetails", p2, {
+          headers,
+        });
+
+      if (dirty.image_prompt !== undefined) {
+        await axios.patch(
+          config.BASE_URL + "/user/photo/prompt",
+          {
+            photo_id: finalPhotos?.[0]?.photo_id,
+            prompt: dirty.image_prompt,
+          },
+          { headers }
+        );
+
+        setPhotos((p) => {
+          const updated = [...p];
+          updated[0] = { ...updated[0], prompt: dirty.image_prompt };
+          return updated;
+        });
+      }
+
+      setOriginal(profile);
+      setDirty({});
+    } catch (err) {
+      console.log("Updating error", err);
+    }
   };
+
+  // GROUPED PROFILE BLOCK SECTIONS
+  const repeatedBlocks = [
+    {
+      dob: profile.dob,
+      location: profile.location,
+      mother_tongue: profile.mother_tongue,
+      religion: profile.religion,
+    },
+    {
+      education: profile.education,
+      job_industry: profile.job_industry,
+      looking_for: profile.looking_for,
+      open_to: profile.open_to,
+    },
+    {
+      drinking: profile.drinking,
+      smoking: profile.smoking,
+      workout: profile.workout,
+      dietary: profile.dietary,
+      sleeping_habit: profile.sleeping_habit,
+    },
+    {
+      love_style: profile.love_style,
+      communication_style: profile.communication_style,
+      family_plan: profile.family_plan,
+      personality_type: profile.personality_type,
+      pet: profile.pet,
+      zodiac: profile.zodiac,
+      preferred_gender: profile.preferred_gender,
+    },
+  ];
 
   return (
     <View style={{ flex: 1 }}>
+      {/* HEADER */}
+      {!editable && (
+        <View style={styles.actionBar}>
+          <TouchableOpacity onPress={onBack}>
+            <Ionicons name="chevron-back" size={28} color="white" />
+          </TouchableOpacity>
 
-      {/* ⭐ TOP ACTION BAR ⭐ */}
-      <View style={styles.actionBar}>
-        <TouchableOpacity onPress={onBack} style={styles.actionBtnWrap}>
-          <Ionicons name="chevron-back" size={28} color="white" />
-        </TouchableOpacity>
-
-        {showMenu && (
           <Menu>
             <MenuTrigger>
-              <View style={styles.actionBtnWrap}>
-                <Ionicons name="ellipsis-vertical" size={28} color="white" />
-              </View>
+              <Ionicons name="ellipsis-vertical" size={26} color="white" />
             </MenuTrigger>
 
             <MenuOptions customStyles={menuStyles}>
-
-              <MenuOption
-                onSelect={() => setReportVisible(true)}
-                text="Report"
-              />
-              <MenuOption
-                onSelect={blockUser}
-                text="Block"
-              />
-
+              <MenuOption onSelect={() => setReportVisible(true)} text="Report" />
+              <MenuOption onSelect={handleBlock} text="Block" />
             </MenuOptions>
           </Menu>
-        )}
-      </View>
+        </View>
+      )}
 
-      {/* MAIN CONTENT */}
+      {/* CONTENT */}
       <ScrollView style={styles.pageContainer}>
         <View style={styles.mainCard}>
-          <View style={styles.heroPhoto}>
-            <PhotoInput imageUrl={config.urlConverter(finalPhotos[0]?.photo_url)} />
+          <View style={{ alignItems: "center", width: "100%" }}>
+            <PhotoInput imageUrl={config.urlConverter(finalPhotos?.[0]?.photo_url)} />
           </View>
 
-          <View style={styles.cardBody}>
-            <Text style={styles.name}>{profile.user_name}</Text>
-            <Text style={styles.tagline}>{profile.tagline}</Text>
+          <Text style={styles.name}>{profile.user_name}</Text>
+          <Text style={styles.tagline}>{profile.tagline}</Text>
 
-            <Text style={styles.sectionLabel}>Bio</Text>
-            <TextInput
-              value={profile.bio || ""}
-              style={styles.textArea}
-              editable={editable}
-              onChangeText={(t) => handleChange("bio", t)}
-            />
+          <Text style={styles.sectionLabel}>Bio</Text>
+          <TextInput
+            style={styles.textArea}
+            editable={editable}
+            value={profile.bio || ""}
+            onChangeText={(v) => handleChange("bio", v)}
+          />
+
+          {/* Height / Weight / Gender */}
+          <View style={styles.row}>
+            <View style={styles.col}>
+              <Text style={styles.sectionLabel}>Height</Text>
+              <TextInput
+                style={styles.input}
+                editable={editable}
+                value={profile.height?.toString() || ""}
+                onChangeText={(v) => handleChange("height", v)}
+                keyboardType="numeric"
+                inputMode="numeric"
+              />
+            </View>
+
+            <View style={styles.col}>
+              <Text style={styles.sectionLabel}>Weight</Text>
+              <TextInput
+                keyboardType="numeric"
+                inputMode="numeric"
+                style={styles.input}
+                editable={editable}
+                value={profile.weight?.toString() || ""}
+                onChangeText={(v) => handleChange("weight", v)}
+              />
+            </View>
+
+            <View style={styles.col}>
+              <MySelect
+                label="Gender"
+                value={profile.gender}
+                options={genderList}
+                noDropdown={!editable}
+                onChange={(v) => handleChange("gender", v)}
+              />
+            </View>
           </View>
+
+          {(editable || profile.image_prompt) && (
+            <>
+              <Text style={styles.sectionLabel}>Image Prompt</Text>
+              <TextInput
+                style={styles.textArea}
+                editable={editable}
+                value={profile.image_prompt || ""}
+                onChangeText={(v) => handleChange("image_prompt", v)}
+              />
+            </>
+          )}
+
+          {editable && Object.keys(dirty).length > 0 && (
+            <TouchableOpacity style={styles.saveBtn} onPress={handleUpdate}>
+              <Text style={styles.saveBtnText}>Update Profile</Text>
+            </TouchableOpacity>
+          )}
         </View>
+
+        {repeatedBlocks.map((section, i) => (
+          <ProfileViewBlock
+            key={i}
+            dataObj={section}
+            photos={finalPhotos}
+            editable={editable}
+            index={Math.min(i + 1, finalPhotos.length - 1)}
+            reverse={i % 2 === 1}
+          />
+        ))}
       </ScrollView>
 
       {/* REPORT MODAL */}
       {reportVisible && (
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
           <View style={styles.modalBox}>
             <Text style={styles.modalTitle}>Report User</Text>
 
             <MySelect
               label="Reason"
               value={reason}
-              options={[
-                { id: 1, name: "Fake Profile" },
-                { id: 2, name: "Inappropriate Photos" },
-                { id: 3, name: "Harassment" },
-                { id: 4, name: "Spam or Scam" },
-                { id: 99, name: "Other" },
-              ]}
-              onChange={setReason}
+              options={reportReasons.map((r) => ({ id: r.reason_id, name: r.name }))}
+              onChange={(v) => setReason(v)}
             />
 
             {reason === 99 && (
               <TextInput
-                placeholder="Enter other reason..."
+                placeholder="Enter custom reason..."
                 placeholderTextColor="#777"
                 value={customReason}
                 onChangeText={setCustomReason}
@@ -285,7 +424,7 @@ const ProfileView = ({ editable, profileData, showMenu, onBack }) => {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       )}
     </View>
   );
@@ -293,81 +432,74 @@ const ProfileView = ({ editable, profileData, showMenu, onBack }) => {
 
 export default ProfileView;
 
-// ================== STYLES ===================
+/* ------------------ STYLES ------------------ */
 const styles = StyleSheet.create({
   actionBar: {
-    width: "100%",
     height: 60,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
     backgroundColor: "#000",
-    marginTop: 40,
-    borderBottomWidth: 1,
-    borderBottomColor: "#222",
-    zIndex: 50,
   },
-  actionBtnWrap: {
-    padding: 6,
-  },
-
   pageContainer: {
+    padding: 16,
     backgroundColor: "#000",
-    paddingHorizontal: 16,
-    paddingTop: 10,
-    paddingBottom: 80,
   },
-
   mainCard: {
     backgroundColor: "#121212",
     padding: 18,
     borderRadius: 14,
-    marginBottom: 26,
-    borderColor: "#222",
-    borderWidth: 1,
+    marginBottom: 30,
   },
-
-  heroPhoto: {
-    width: "100%",
-    height: 420,
-    borderRadius: 14,
-    overflow: "hidden",
-    marginBottom: 18,
-    backgroundColor: "#1c1c1c",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
   name: {
     color: "white",
     fontSize: 28,
     fontWeight: "bold",
-    marginBottom: 4,
+    marginTop: 10,
   },
-
   tagline: {
-    color: "#bbb",
+    color: "#aaa",
+    marginBottom: 10,
     fontStyle: "italic",
-    marginBottom: 16,
   },
-
   sectionLabel: {
     color: "#bbb",
-    fontSize: 14,
-    marginBottom: 6,
+    marginTop: 14,
+    marginBottom: 4,
   },
-
   textArea: {
-    backgroundColor: "#1d1d1d",
+    backgroundColor: "#1c1c1c",
     color: "white",
+    borderRadius: 10,
+    padding: 10,
+    minHeight: 120,
+  },
+  row: {
+    flexDirection: "row",
+    marginTop: 12,
+  },
+  col: {
+    flex: 1,
+    marginRight: 8,
+  },
+  input: {
+    backgroundColor: "#1c1c1c",
+    color: "white",
+    borderRadius: 10,
+    padding: 10,
+  },
+  saveBtn: {
+    backgroundColor: "#0a84ff",
     padding: 12,
     borderRadius: 10,
-    minHeight: 120,
-    marginBottom: 18,
-    textAlignVertical: "top",
+    marginTop: 20,
   },
-
+  saveBtnText: {
+    color: "white",
+    textAlign: "center",
+    fontWeight: "600",
+  },
   modalOverlay: {
     position: "absolute",
     top: 0,
@@ -379,20 +511,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     zIndex: 999,
   },
-
   modalBox: {
     width: "85%",
     backgroundColor: "#1a1a1a",
     padding: 20,
     borderRadius: 12,
   },
-
   modalTitle: {
     color: "#fff",
     fontSize: 20,
     marginBottom: 15,
   },
-
   modalInput: {
     backgroundColor: "#222",
     padding: 12,
@@ -400,21 +529,18 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginTop: 10,
   },
-
   modalActions: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginTop: 20,
   },
-
   modalCancel: {
-    backgroundColor: "#444",
+    backgroundColor: "#555",
     padding: 12,
     width: "48%",
     borderRadius: 10,
     alignItems: "center",
   },
-
   modalSubmit: {
     backgroundColor: "#d9534f",
     padding: 12,
@@ -422,25 +548,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
   },
-
   modalBtnText: {
     color: "white",
     fontWeight: "600",
   },
 });
-
-// CUSTOM POPUP MENU STYLE
-const menuStyles = {
-  optionsContainer: {
-    backgroundColor: "#1c1c1c",
-    borderColor: "#444",
-    borderWidth: 1,
-    padding: 5,
-    width: 140,
-  },
-  optionText: {
-    color: "white",
-    padding: 10,
-    fontSize: 16,
-  },
-};
