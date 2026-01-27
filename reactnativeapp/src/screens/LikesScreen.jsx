@@ -165,10 +165,10 @@ export default function LikesScreen() {
 
   if (showProfile && profileData) {
     return (
-      <View style={{ flex: 1, backgroundColor: "#000" }}>
-        <ProfileView editable={false} 
-        profileData={profileData} 
-        onBack={() => setShowProfile(false)}
+      <View style={{ flex: 1, backgroundColor: "#000"}}>
+        <ProfileView editable={false}
+          profileData={profileData}
+          onBack={() => setShowProfile(false)}
         />
       </View>
     );
@@ -244,6 +244,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     textAlign: "center",
     marginVertical: 12,
+    paddingTop: 37 ,
   },
   sectionTitle: {
     color: "#bbb",

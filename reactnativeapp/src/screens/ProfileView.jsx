@@ -303,7 +303,8 @@ const ProfileView = ({ editable, profileData, onBack }) => {
       <ScrollView style={styles.pageContainer}>
         <View style={styles.mainCard}>
           <View style={{ alignItems: "center", width: "100%" }}>
-            <PhotoInput imageUrl={config.urlConverter(finalPhotos?.[0]?.photo_url)} />
+            <PhotoInput imageUrl={config.urlConverter(finalPhotos?.[0]?.photo_url)}
+              disabled={!editable} />
           </View>
 
           <Text style={styles.name}>{profile.user_name}</Text>
@@ -319,7 +320,7 @@ const ProfileView = ({ editable, profileData, onBack }) => {
 
           {/* Height / Weight / Gender */}
           <View style={styles.row}>
-            <View style={styles.col}>
+            {(profile.height || editable) && <View style={styles.col}>
               <Text style={styles.sectionLabel}>Height</Text>
               <TextInput
                 style={styles.input}
@@ -329,9 +330,9 @@ const ProfileView = ({ editable, profileData, onBack }) => {
                 keyboardType="numeric"
                 inputMode="numeric"
               />
-            </View>
+            </View>}
 
-            <View style={styles.col}>
+            {(profile.height || editable) && <View style={styles.col}>
               <Text style={styles.sectionLabel}>Weight</Text>
               <TextInput
                 keyboardType="numeric"
@@ -341,7 +342,7 @@ const ProfileView = ({ editable, profileData, onBack }) => {
                 value={profile.weight?.toString() || ""}
                 onChangeText={(v) => handleChange("weight", v)}
               />
-            </View>
+            </View>}
 
             <View style={styles.col}>
               <MySelect

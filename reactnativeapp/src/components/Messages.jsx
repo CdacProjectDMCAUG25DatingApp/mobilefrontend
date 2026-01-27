@@ -151,7 +151,11 @@ export default function Messages({ user, candidateToken, goBack }) {
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: "#000" },
+    container: {
+        flex: 1,
+        backgroundColor: "#000",
+    paddingTop:37,
+    },
 
     header: {
         flexDirection: "row",

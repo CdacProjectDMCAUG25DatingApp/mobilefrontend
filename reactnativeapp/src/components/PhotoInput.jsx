@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { View, Image, TouchableOpacity, Text, StyleSheet } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 
-const PhotoInput = ({ imageUrl, onChange }) => {
+const PhotoInput = ({ imageUrl, onChange, disabled }) => {
+
   const [preview, setPreview] = useState(imageUrl);
 
   const pickImage = async () => {
@@ -28,7 +29,9 @@ const PhotoInput = ({ imageUrl, onChange }) => {
   };
 
   return (
-    <TouchableOpacity onPress={pickImage} style={styles.box}>
+    <TouchableOpacity onPress={disabled ? null : pickImage}
+      activeOpacity={disabled ? 1 : 0.7}
+      style={[styles.box, disabled && { opacity: 0.9 }]}>
       {preview ? (
         <Image source={{ uri: preview }} style={styles.image} />
       ) : (

@@ -199,7 +199,7 @@ export default function ProfileViewBlock({ dataObj, photos, editable, index }) {
       <View style={styles.photoBox}>
         <PhotoInput
           imageUrl={config.urlConverter(photos?.[index]?.photo_url)}
-          editable={false}
+          disabled={!editable}
         />
       </View>
 

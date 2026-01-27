@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View, Text, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, RefreshControl } from "react-native";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -11,6 +11,14 @@ import Messages from "../components/Messages";
 export default function ChatHome() {
   const [chatUsers, setChatUsers] = useState([]);
   const [activeChat, setActiveChat] = useState(null); // this decides what to render
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadChatUsers();      // reload list
+    setTimeout(() => setRefreshing(false), 300);
+  };
+
 
   useEffect(() => {
     connectSocket();
@@ -42,7 +50,7 @@ export default function ChatHome() {
 
   // Default: Chat User List
   return (
-    <View style={{ flex: 1, backgroundColor: "#0A0A0A" }}>
+    <View style={{ flex: 1, backgroundColor: "#0A0A0A", paddingTop: 37 }}>
 
       {/* Title */}
       <Text
@@ -57,16 +65,26 @@ export default function ChatHome() {
         Messages
       </Text>
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 15 }}>
+      <ScrollView
+        contentContainerStyle={{ paddingHorizontal: 15 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="white"
+          />
+        }
+      >
         {chatUsers.map((user, i) => (
           <LikeCard
             key={i}
             user={user}
-            onChat     // enables "Last Message"
-            onCardClick={(u) => setActiveChat(u)}  // opens chat
+            onChat
+            onCardClick={(u) => setActiveChat(u)}
           />
         ))}
       </ScrollView>
+
 
     </View>
   );
