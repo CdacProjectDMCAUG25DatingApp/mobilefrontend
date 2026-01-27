@@ -56,7 +56,7 @@ const Login = ({ navigation }) => {
       // HEADER WITH TOKEN
       const headers = { token: await AsyncStorage.getItem("token") };
 
-      // 🔥 FETCH USER DATA (DUPLICATE OF REACT LOGIC)
+      // FETCH USER DATA (DUPLICATE OF REACT LOGIC)
       const [profileRes, photosRes, prefRes, userDetailsRes] =
         await Promise.all([
           axios.get(config.BASE_URL + "/user/userprofile", { headers }),
@@ -70,7 +70,7 @@ const Login = ({ navigation }) => {
       setPreferences(prefRes.data.data[0] || {});
       setUserDetails(userDetailsRes.data.data[0] || {});
 
-      // 🔥 ONBOARDING NAVIGATION (MATCHES YOUR WEB LOGIC)
+      // ONBOARDING NAVIGATION (MATCHES YOUR WEB LOGIC)
       if (!profileRes.data.data.length)
         return navigation.replace("CreateProfile");
 
