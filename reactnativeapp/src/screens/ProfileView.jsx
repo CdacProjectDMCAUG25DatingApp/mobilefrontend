@@ -435,6 +435,7 @@ export default ProfileView;
 /* ------------------ STYLES ------------------ */
 const styles = StyleSheet.create({
   actionBar: {
+    marginTop: 30,          // ← leave space from top (20–40 as you asked)
     height: 60,
     flexDirection: "row",
     alignItems: "center",
@@ -442,27 +443,54 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     backgroundColor: "#000",
   },
+
   pageContainer: {
-    padding: 16,
+    paddingTop: 20,         // cleaner top spacing inside scroll
+    paddingHorizontal: 16,
     backgroundColor: "#000",
   },
+
   mainCard: {
     backgroundColor: "#121212",
-    padding: 18,
-    borderRadius: 14,
+    padding: 20,
+    borderRadius: 16,
+    marginTop: 10,          // keeps card away from header
     marginBottom: 30,
   },
+
   name: {
     color: "white",
     fontSize: 28,
     fontWeight: "bold",
-    marginTop: 10,
+    marginTop: 16,
+    textAlign: "center",    // better centered layout
   },
+
   tagline: {
     color: "#aaa",
-    marginBottom: 10,
+    marginBottom: 12,
+    textAlign: "center",
     fontStyle: "italic",
   },
+
+  row: {
+    flexDirection: "row",
+    marginTop: 16,
+  },
+
+  col: {
+    flex: 1,
+    marginRight: 10,
+  },
+
+  input: {
+    backgroundColor: "#1c1c1c",
+    color: "white",
+    borderRadius: 10,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+  },
+
   sectionLabel: {
     color: "#bbb",
     marginTop: 14,
@@ -474,14 +502,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 10,
     minHeight: 120,
-  },
-  row: {
-    flexDirection: "row",
-    marginTop: 12,
-  },
-  col: {
-    flex: 1,
-    marginRight: 8,
   },
   input: {
     backgroundColor: "#1c1c1c",
