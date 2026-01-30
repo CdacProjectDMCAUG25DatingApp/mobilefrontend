@@ -11,51 +11,19 @@ import ProfileView from "../screens/ProfileView";
 import LikesScreen from "../screens/LikesScreen";
 import Settings from "../screens/Settings";
 import SwipeCardStack from "../components/SwipeCardStack";
+import { loadUserDetails, loadPhotos } from "../redux/userDetailsThunks";
 
-import config from "../services/config";
-import { UserContext } from "../context/UserContext";
+import { useDispatch } from 'react-redux';
 
 const Home = () => {
-  const {
-    setUserDetails,
-    setPhotos,
-    setPreferences,
-  } = useContext(UserContext);
 
-  const isFocused = useIsFocused();
+  const dispatch = useDispatch();
 
-  // -------- Fetch fresh data whenever Home comes into focus --------
-  const refreshUserData = async () => {
-    const token = await AsyncStorage.getItem("token");
-    const headers = { token };
-
-    try {
-      const [detailsRes, photosRes, prefRes] = await Promise.all([
-        axios.get(config.BASE_URL + "/user/userdetails", { headers }),
-        axios.get(config.BASE_URL + "/photos/userphotos", { headers }),
-        axios.get(config.BASE_URL + "/user/userpreferences", { headers }),
-      ]);
-
-      if (detailsRes.data.data.length)
-        setUserDetails(detailsRes.data.data[0]);
-
-      if (photosRes.data.data.length)
-        setPhotos(photosRes.data.data);
-
-      if (prefRes.data.data.length)
-        setPreferences(prefRes.data.data[0]);
-    } catch (error) {
-      console.log("Home refresh error →", error);
-    }
-  };
-
-  // Trigger when tab/screen is active
   useEffect(() => {
-    if (isFocused) refreshUserData();
-  }, [isFocused]);
-
-  // ------------------------------------------------------------------
-
+    dispatch(loadUserDetails());
+    dispatch(loadPhotos());
+  }, []);
+  
   return (
 
     <BottomTabsPager

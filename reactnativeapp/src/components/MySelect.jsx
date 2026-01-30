@@ -10,37 +10,41 @@ import {
 import { Picker } from "@react-native-picker/picker";
 
 const MySelect = ({ label, value, options = [], noDropdown, onChange }) => {
-  const [showIOSPicker, setShowIOSPicker] = useState(false);
+  const [iosOpen, setIosOpen] = useState(false);
 
-  const resolvedValue = (() => {
-    if (!value) return "";
-    if (typeof value === "number") return value;
-    const match = options.find((o) => o.name === value);
-    return match ? match.id : "";
-  })();
+  const stringValue = value !== undefined && value !== null
+    ? String(value)
+    : "";
 
-  const displayText = (() => {
-    const item = options.find((o) => o.id === resolvedValue);
-    return item ? item.name : "Select";
-  })();
+  const stringOptions = options.map((o) => ({
+    id: String(o.id),
+    name: o.name,
+  }));
 
+  // Display text
+  const selectedLabel =
+    stringOptions.find((o) => o.id === stringValue)?.name || "Select";
+
+  // -----------------------------
+  // iOS Picker UI
+  // -----------------------------
   const renderIOSPicker = () => (
-    <Modal transparent animationType="slide" visible={showIOSPicker}>
-      <View style={styles.modalContainer}>
-        <View style={styles.modalContent}>
+    <Modal transparent animationType="slide" visible={iosOpen}>
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalBox}>
           <TouchableOpacity
-            style={styles.doneButton}
-            onPress={() => setShowIOSPicker(false)}
+            style={styles.doneBtn}
+            onPress={() => setIosOpen(false)}
           >
-            <Text style={styles.doneText}>Done</Text>
+            <Text style={styles.doneTxt}>Done</Text>
           </TouchableOpacity>
 
           <Picker
-            selectedValue={resolvedValue}
-            onValueChange={(val) => onChange(val)}
+            selectedValue={stringValue}
+            onValueChange={(val) => onChange(val)} // return string
           >
-            {!value && <Picker.Item label="Select" value="" />}
-            {options.map((opt) => (
+            <Picker.Item label="Select" value="" />
+            {stringOptions.map((opt) => (
               <Picker.Item key={opt.id} label={opt.name} value={opt.id} />
             ))}
           </Picker>
@@ -49,40 +53,60 @@ const MySelect = ({ label, value, options = [], noDropdown, onChange }) => {
     </Modal>
   );
 
-  return (
-    <View style={styles.wrapper}>
-      <Text style={styles.label}>{label}</Text>
-
-      {noDropdown ? (
-        <View style={styles.readonly}>
-          <Text style={styles.readonlyText}>{displayText}</Text>
+  // -----------------------------
+  // READONLY MODE
+  // -----------------------------
+  if (noDropdown) {
+    return (
+      <View style={styles.wrapper}>
+        <Text style={styles.label}>{label}</Text>
+        <View style={styles.readonlyBox}>
+          <Text style={styles.readonlyTxt}>{selectedLabel}</Text>
         </View>
-      ) : Platform.OS === "ios" ? (
-        <>
-          <TouchableOpacity
-            onPress={() => setShowIOSPicker(true)}
-            style={styles.iosSelector}
-          >
-            <Text style={styles.iosSelectorText}>{displayText}</Text>
-          </TouchableOpacity>
+      </View>
+    );
+  }
 
-          {showIOSPicker && renderIOSPicker()}
-        </>
-      ) : (
-        <View style={styles.pickerBox}>
+  // -----------------------------
+  // ANDROID — native Picker
+  // -----------------------------
+  if (Platform.OS === "android") {
+    return (
+      <View style={styles.wrapper}>
+        <Text style={styles.label}>{label}</Text>
+
+        <View style={styles.androidPickerBox}>
           <Picker
-            selectedValue={resolvedValue}
-            onValueChange={(val) => onChange(val)}
-            style={styles.picker}
+            selectedValue={stringValue}
             dropdownIconColor="white"
+            style={styles.androidPicker}
+            onValueChange={(val) => onChange(val)}
           >
-            {!value && <Picker.Item label="Select" value="" />}
-            {options.map((opt) => (
+            <Picker.Item label="Select" value="" />
+            {stringOptions.map((opt) => (
               <Picker.Item key={opt.id} label={opt.name} value={opt.id} />
             ))}
           </Picker>
         </View>
-      )}
+      </View>
+    );
+  }
+
+  // -----------------------------
+  // iOS
+  // -----------------------------
+  return (
+    <View style={styles.wrapper}>
+      <Text style={styles.label}>{label}</Text>
+
+      <TouchableOpacity
+        style={styles.iosSelector}
+        onPress={() => setIosOpen(true)}
+      >
+        <Text style={styles.iosText}>{selectedLabel}</Text>
+      </TouchableOpacity>
+
+      {renderIOSPicker()}
     </View>
   );
 };
@@ -90,53 +114,51 @@ const MySelect = ({ label, value, options = [], noDropdown, onChange }) => {
 export default MySelect;
 
 const styles = StyleSheet.create({
-  wrapper: { marginBottom: 14 },
-  label: { color: "#bbb", marginBottom: 6, fontSize: 13 },
+  wrapper: { marginBottom: 18 },
+  label: { color: "#aaa", marginBottom: 6, fontSize: 14 },
 
-  // ANDROID Picker Box
-  pickerBox: {
+  // Readonly
+  readonlyBox: {
     backgroundColor: "#222",
-    borderRadius: 6,
+    padding: 12,
+    borderRadius: 8,
+  },
+  readonlyTxt: { color: "white" },
+
+  // ANDROID
+  androidPickerBox: {
+    backgroundColor: "#222",
+    borderRadius: 8,
     overflow: "hidden",
   },
-  picker: {
+  androidPicker: {
     color: "white",
+    height: 50,
     width: "100%",
   },
 
-  // READONLY
-  readonly: {
-    backgroundColor: "#222",
-    padding: 12,
-    borderRadius: 6,
-  },
-  readonlyText: { color: "white" },
-
-  // iOS Touchable Selector
+  // iOS Selector
   iosSelector: {
     backgroundColor: "#222",
     padding: 12,
-    borderRadius: 6,
+    borderRadius: 8,
   },
-  iosSelectorText: {
-    color: "white",
-  },
+  iosText: { color: "white" },
 
   // iOS Modal
-  modalContainer: {
+  modalOverlay: {
     flex: 1,
+    backgroundColor: "rgba(0,0,0,0.45)",
     justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.4)",
   },
-  modalContent: {
+  modalBox: {
     backgroundColor: "#fff",
-    paddingBottom: 30,
   },
-  doneButton: {
-    alignItems: "flex-end",
+  doneBtn: {
     padding: 12,
+    alignItems: "flex-end",
   },
-  doneText: {
+  doneTxt: {
     color: "#007AFF",
     fontSize: 16,
     fontWeight: "600",

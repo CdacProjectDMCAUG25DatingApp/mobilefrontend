@@ -1,97 +1,81 @@
-// src/components/ProfileViewBlock.jsx
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
   TextInput,
-  StyleSheet,
   TouchableOpacity,
+  StyleSheet,
 } from "react-native";
 
 import axios from "axios";
 import config from "../services/config";
-import MySelect from "./MySelect";
+
 import PhotoInput from "./PhotoInput";
+import MySelect from "./MySelect";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import { UserContext } from "../context/UserContext";
+
+import { useSelector, useDispatch } from "react-redux";
+import { setPhotos } from "../redux/photosSlice";
+import { setUserDetails } from "../redux/userDetailsSlice";
+import { updateUserDetails } from "../redux/userDetailsThunks";
 
 export default function ProfileViewBlock({ dataObj, photos, editable, index }) {
-  const { setPhotos, setUserDetails } = useContext(UserContext);
+  const dispatch = useDispatch();
 
+  // Redux state
+  const reduxDetails = useSelector((s) => s.userDetails.data);
+  // Local state
   const [profile, setProfile] = useState({});
   const [original, setOriginal] = useState({});
   const [dirty, setDirty] = useState({});
   const [showDobPicker, setShowDobPicker] = useState(false);
 
-  /* ---------------- LOOKUPS ---------------- */
-
-  const endpoints = [
-    "job-industry",
-    "lookingfor",
-    "lovestyle",
-    "mother-tongue",
-    "familyplan",
-    "drinking",
-    "education",
-    "communicationstyle",
-    "opento",
-    "personalitytype",
-    "pet",
-    "religion",
-    "sleepingHabit",
-    "workout",
-    "zodiac",
-    "smoking",
-    "dietary",
-    "gender",
-  ];
-
+  // Lookup lists
   const [lookups, setLookups] = useState({});
 
+  const apiEndpoints = {
+    job_industry: "job-industry",
+    looking_for: "lookingfor",
+    love_style: "lovestyle",
+    mother_tongue: "mother-tongue",
+    family_plan: "familyplan",
+    drinking: "drinking",
+    education: "education",
+    communication_style: "communicationstyle",
+    open_to: "opento",
+    personality_type: "personalitytype",
+    pet: "pet",
+    religion: "religion",
+    sleeping_habit: "sleepingHabit",
+    workout: "workout",
+    zodiac: "zodiac",
+    smoking: "smoking",
+    dietary: "dietary",
+    preferred_gender: "gender",
+  };
+
+  // ---------------- LOOKUPS LOAD ----------------
   useEffect(() => {
     (async () => {
       const token = await config.getToken("token");
       const headers = { token };
 
-      const req = endpoints.map((e) =>
+      const fetches = Object.values(apiEndpoints).map((e) =>
         axios.get(`${config.BASE_URL}/api/${e}`, { headers })
       );
 
-      const res = await Promise.all(req);
+      const results = await Promise.all(fetches);
 
-      const map = {};
-      endpoints.forEach((e, i) => (map[e] = res[i].data.data));
+      const mapped = {};
+      Object.keys(apiEndpoints).forEach((key, i) => {
+        mapped[key] = results[i].data.data;
+      });
 
-      setLookups(map);
+      setLookups(mapped);
     })();
   }, []);
 
-  /* ------------ KEY → LOOKUP MAPPING ---------- */
-
-  const dropdownMap = {
-    job_industry: lookups["job-industry"],
-    looking_for: lookups["lookingfor"],
-    love_style: lookups["lovestyle"],
-    mother_tongue: lookups["mother-tongue"],
-    family_plan: lookups["familyplan"],
-    drinking: lookups["drinking"],
-    education: lookups["education"],
-    communication_style: lookups["communicationstyle"],
-    open_to: lookups["opento"],
-    personality_type: lookups["personalitytype"],
-    pet: lookups["pet"],
-    religion: lookups["religion"],
-    sleeping_habit: lookups["sleepingHabit"],
-    workout: lookups["workout"],
-    zodiac: lookups["zodiac"],
-    smoking: lookups["smoking"],
-    dietary: lookups["dietary"],
-    preferred_gender: lookups["gender"],
-  };
-
-
-  /* ---------------- INIT MERGE ---------------- */
-
+  // ---------------- INIT MERGE ----------------
   useEffect(() => {
     if (!dataObj) return;
 
@@ -100,13 +84,12 @@ export default function ProfileViewBlock({ dataObj, photos, editable, index }) {
       image_prompt: photos?.[index]?.prompt || "",
     };
 
-    setOriginal(merged);
     setProfile(merged);
+    setOriginal(merged);
     setDirty({});
-  }, [dataObj, photos, lookups]);
+  }, [dataObj, photos]);
 
-  /* ---------------- HANDLE CHANGE ---------------- */
-
+  // ---------------- HANDLE CHANGE ----------------
   const handleChange = (key, value) => {
     setProfile((p) => ({ ...p, [key]: value }));
 
@@ -119,109 +102,89 @@ export default function ProfileViewBlock({ dataObj, photos, editable, index }) {
     }
   };
 
-  /* ---------------- UPDATE SECTION ---------------- */
-
-  const updateSection = async () => {
+  // ---------------- SAVE SECTION -
+  // ---------------
+  const handleUpdate = async () => {
     if (!Object.keys(dirty).length) return;
 
     const token = await config.getToken("token");
     const headers = { token };
 
-    const basicProfileKeys = [
-      "bio",
-      "height",
-      "weight",
-      "gender",
-      "tagline",
-      "dob",
-      "marital_status",
-      "location",
-      "mother_tongue_id",
-      "religion_id",
-      "education_id",
-      "job_industry_id",
-    ];
+    const updatePayload = { ...dirty };
+    const promptVal = updatePayload.image_prompt;
+    delete updatePayload.image_prompt;
 
-    const personalKeys = Object.keys(dirty).filter(
-      (k) => !basicProfileKeys.includes(k)
-    );
+    try {
+      // 1. Update prompt
+      if (promptVal !== undefined && photos[index]?.photo_id) {
+        await axios.patch(
+          `${config.BASE_URL}/user/photo/prompt`,
+          {
+            photo_id: photos[index].photo_id,
+            prompt: promptVal,
+          },
+          { headers }
+        );
 
-    const mainProfilePayload = {};
-    const detailsPayload = {};
-
-    Object.entries(dirty).forEach(([k, v]) => {
-      if (basicProfileKeys.includes(k)) {
-        mainProfilePayload[k] = v;
-      } else {
-        detailsPayload[k] = v;
+        dispatch(
+          setPhotos(
+            photos.map((p, i) =>
+              i === index ? { ...p, prompt: promptVal } : p
+            )
+          )
+        );
       }
-    });
 
-    if (Object.keys(mainProfilePayload).length)
-      await axios.patch(`${config.BASE_URL}/user/profile`, mainProfilePayload, {
-        headers,
-      });
+      // 2. Update user details (merged API)
+      if (Object.keys(updatePayload).length > 0) {
+        await dispatch(updateUserDetails(updatePayload));
+      }
 
-    if (Object.keys(detailsPayload).length)
-      await axios.patch(`${config.BASE_URL}/user/userdetails`, detailsPayload, {
-        headers,
-      });
-
-    // Update image prompt separately
-    if (dirty.image_prompt !== undefined && photos?.[index]?.photo_id) {
-      await axios.patch(
-        `${config.BASE_URL}/user/photo/prompt`,
-        {
-          photo_id: photos[index].photo_id,
-          prompt: dirty.image_prompt,
-        },
-        { headers }
+      // 3. Merge into redux
+      dispatch(
+        setUserDetails({
+          ...reduxDetails,
+          ...profile,
+        })
       );
 
-      // update context
-      setPhotos((prev) => {
-        const arr = [...prev];
-        arr[index] = { ...arr[index], prompt: dirty.image_prompt };
-        return arr;
-      });
+      setOriginal(profile);
+      setDirty({});
+    } catch (err) {
+      console.log("Error updating block:", err);
     }
-
-    setUserDetails((prev) => ({ ...prev, ...dirty }));
-    setOriginal(profile);
-    setDirty({});
   };
 
-  /* ---------------- UI RENDER ---------------- */
-
+  // ---------------- UI RENDER ----------------
   return (
     <View style={styles.block}>
       {/* PHOTO */}
-      <View style={styles.photoBox}>
+      <View style={styles.photoContainer}>
         <PhotoInput
-          imageUrl={config.urlConverter(photos?.[index]?.photo_url)}
+          imageUrl={config.urlConverter(photos[index]?.photo_url)}
           disabled={!editable}
         />
       </View>
 
       {/* IMAGE PROMPT */}
       {(editable || profile.image_prompt) && (
-        <View style={styles.section}>
+        <View style={{ marginBottom: 18 }}>
           <Text style={styles.label}>Image Prompt</Text>
           <TextInput
+            editable={editable}
             style={styles.inputMultiline}
             multiline
-            editable={editable}
             value={profile.image_prompt}
             onChangeText={(t) => handleChange("image_prompt", t)}
           />
         </View>
       )}
 
-      {/* ALL OTHER FIELDS */}
+      {/* DYNAMIC FIELDS */}
       {Object.entries(profile)
         .filter(([key]) => key !== "image_prompt")
         .map(([key, value]) => {
-          /* DOB FIELD */
+          // DOB
           if (key === "dob") {
             return (
               <View key={key} style={styles.section}>
@@ -236,14 +199,14 @@ export default function ProfileViewBlock({ dataObj, photos, editable, index }) {
                       <Text style={styles.valueText}>
                         {value
                           ? new Date(value).toDateString()
-                          : "Select Date"}
+                          : "Choose Date"}
                       </Text>
                     </TouchableOpacity>
 
                     {showDobPicker && (
                       <DateTimePicker
-                        value={value ? new Date(value) : new Date()}
                         mode="date"
+                        value={value ? new Date(value) : new Date()}
                         display="default"
                         onChange={(e, d) => {
                           setShowDobPicker(false);
@@ -261,14 +224,14 @@ export default function ProfileViewBlock({ dataObj, photos, editable, index }) {
             );
           }
 
-          /* DROPDOWN FIELDS */
-          if (dropdownMap[key]) {
+          // SELECT FIELDS
+          if (lookups[key]) {
             return (
               <View key={key} style={styles.section}>
                 <MySelect
-                  label={key.replace(/_/g, " ").replace("id", "")}
+                  label={key.replace(/_/g, " ")}
                   value={value}
-                  options={dropdownMap[key]}
+                  options={lookups[key]}
                   noDropdown={!editable}
                   onChange={(v) => handleChange(key, v)}
                 />
@@ -276,14 +239,13 @@ export default function ProfileViewBlock({ dataObj, photos, editable, index }) {
             );
           }
 
-          /* NORMAL TEXT FIELD */
           return (
             <View key={key} style={styles.section}>
               <Text style={styles.label}>{key.replace(/_/g, " ")}</Text>
               <TextInput
-                style={styles.input}
                 editable={editable}
                 value={value?.toString() || ""}
+                style={styles.input}
                 onChangeText={(t) => handleChange(key, t)}
               />
             </View>
@@ -294,7 +256,7 @@ export default function ProfileViewBlock({ dataObj, photos, editable, index }) {
       {editable && Object.keys(dirty).length > 0 && (
         <View style={styles.actionRow}>
           <TouchableOpacity
-            style={[styles.btn, styles.cancelBtn]}
+            style={[styles.btn, styles.cancel]}
             onPress={() => {
               setProfile(original);
               setDirty({});
@@ -304,10 +266,10 @@ export default function ProfileViewBlock({ dataObj, photos, editable, index }) {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.btn, styles.updateBtn]}
-            onPress={updateSection}
+            style={[styles.btn, styles.save]}
+            onPress={handleUpdate}
           >
-            <Text style={styles.btnText}>Update</Text>
+            <Text style={styles.btnText}>Save Section</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -320,88 +282,57 @@ export default function ProfileViewBlock({ dataObj, photos, editable, index }) {
 const styles = StyleSheet.create({
   block: {
     backgroundColor: "#111",
-    padding: 18,
-    borderRadius: 14,
+    padding: 16,
+    borderRadius: 12,
     marginBottom: 25,
-    borderColor: "#222",
     borderWidth: 1,
+    borderColor: "#222",
   },
-
-  photoBox: {
+  photoContainer: {
     width: "100%",
     height: 420,
-    borderRadius: 14,
+    backgroundColor: "#1a1a1a",
+    borderRadius: 12,
     overflow: "hidden",
-    marginBottom: 18,
-    backgroundColor: "#1c1c1c",
-
-    justifyContent: "center",   // centers vertically
-    alignItems: "center",       // centers horizontally
-  },
-
-
-  section: {
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 20,
   },
-
-  label: {
-    color: "#888",
-    marginBottom: 5,
-    fontSize: 14,
-  },
-
+  section: { marginBottom: 18 },
+  label: { color: "#aaa", marginBottom: 6, fontSize: 14 },
   input: {
     backgroundColor: "#1c1c1c",
     color: "white",
     padding: 12,
     borderRadius: 10,
   },
-
   inputMultiline: {
     backgroundColor: "#1c1c1c",
     color: "white",
     padding: 12,
+    minHeight: 110,
     borderRadius: 10,
-    minHeight: 120,
     textAlignVertical: "top",
   },
-
   dateBox: {
     backgroundColor: "#1c1c1c",
     padding: 12,
     borderRadius: 10,
   },
-
-  valueText: {
-    color: "#ddd",
-    fontSize: 15,
-  },
-
+  valueText: { color: "#ddd", fontSize: 15 },
   actionRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 10,
+    marginTop: 14,
   },
-
   btn: {
     flex: 1,
     padding: 14,
     borderRadius: 10,
-    alignItems: "center",
     marginHorizontal: 4,
+    alignItems: "center",
   },
-
-  cancelBtn: {
-    backgroundColor: "#444",
-  },
-
-  updateBtn: {
-    backgroundColor: "#28a745",
-  },
-
-  btnText: {
-    color: "white",
-    fontWeight: "600",
-    fontSize: 16,
-  },
+  cancel: { backgroundColor: "#444" },
+  save: { backgroundColor: "#0a84ff" },
+  btnText: { color: "white", fontWeight: "600" },
 });

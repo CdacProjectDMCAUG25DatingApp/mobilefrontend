@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -9,19 +9,15 @@ import {
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import styles from "../styles/homeStyles";
+
 import { loginUser } from "../services/user";
-import axios from "axios";
-import config from "../services/config";
-import { UserContext } from "../context/UserContext";
+import { useDispatch } from 'react-redux';
+import { setUser } from "../redux/userSlice";
+import { setPhotos } from "../redux/photosSlice";
+import { setUserDetails } from "../redux/userDetailsSlice";
 
 const Login = ({ navigation }) => {
-  const {
-    setUser,
-    setProfile,
-    setPhotos,
-    setPreferences,
-    setUserDetails,
-  } = useContext(UserContext);
+  const dispatch = useDispatch();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,7 +29,7 @@ const Login = ({ navigation }) => {
     }
 
     try {
-      // 🔥 HIT LOGIN API
+      // HIT LOGIN API
       const result = await loginUser(email, password);
 
       if (result.status !== "success") {
@@ -41,43 +37,29 @@ const Login = ({ navigation }) => {
         return;
       }
 
+      const { token, userdetails, photos, onboarding, name, email: e, mobile } = result.data;
       // SAVE TOKEN IN STORAGE (use AsyncStorage)
-      await AsyncStorage.setItem("token", result.data.token);
+      await AsyncStorage.setItem("token", token);
 
-      // SET USER
-      setUser({
-        name: result.data.name,
-        email: result.data.email,
-        mobile: result.data.mobile,
-      });
+      // set basic user
+      dispatch(setUser({ token, name, email: e, mobile }));
+      dispatch(setUserDetails(userdetails || {}));
+      dispatch(setPhotos(photos || []));
+
 
       Alert.alert("Success", "Login Successful");
 
       // HEADER WITH TOKEN
       const headers = { token: await AsyncStorage.getItem("token") };
 
-      // FETCH USER DATA (DUPLICATE OF REACT LOGIC)
-      const [profileRes, photosRes, prefRes, userDetailsRes] =
-        await Promise.all([
-          axios.get(config.BASE_URL + "/user/userprofile", { headers }),
-          axios.get(config.BASE_URL + "/photos/userphotos", { headers }),
-          axios.get(config.BASE_URL + "/user/userpreferences", { headers }),
-          axios.get(config.BASE_URL + "/user/userdetails", { headers }),
-        ]);
-            
-      setProfile(profileRes.data.data[0] || {});
-      setPhotos(photosRes.data.data || []);
-      setPreferences(prefRes.data.data[0] || {});
-      setUserDetails(userDetailsRes.data.data[0] || {});
-
       // ONBOARDING NAVIGATION (MATCHES YOUR WEB LOGIC)
-      if (!profileRes.data.data.length)
+      if (onboarding.needs_profile)
         return navigation.replace("CreateProfile");
 
-      if (photosRes.data.data.length !== 6)
+      if (onboarding.needs_photos)
         return navigation.replace("AddPhotos");
 
-      if (!prefRes.data.data.length)
+      if (onboarding.needs_preferences)
         return navigation.replace("UserPreferencaes");
 
       // ALL SET → GO TO HOME
