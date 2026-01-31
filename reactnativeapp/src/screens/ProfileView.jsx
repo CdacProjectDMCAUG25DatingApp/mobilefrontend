@@ -26,28 +26,24 @@ import ProfileViewBlock from "../components/ProfileViewBlock";
 import { setPhotos } from "../redux/photosSlice";
 import { setUserDetails } from "../redux/userDetailsSlice";
 import { updateUserDetails } from "../redux/userDetailsThunks";
+import { useNavigation, useRoute } from "@react-navigation/native";
 
-const ProfileView = ({ editable: propEditable, profileData, photos: propPhotos, onBack }) => {
+const ProfileView = ({ editable: componentEditable, profileData: componentData, photos: componentPhotos }) => {
+  const route = useRoute();
+   const params = route.params || {};
+
+  const navigation = useNavigation();
   const dispatch = useDispatch();
+  
+  const isEditable = componentEditable ?? params.propEditable ?? false;
 
   // Redux data
   const reduxUser = useSelector(state => state.userDetails.data);
+  const finalData = componentData ?? params.profileData ?? reduxUser;
+
   const reduxPhotos = useSelector(state => state.photos.data);
-
-  // ---------------------------------------------------------
-  // MERGE INPUTS (same logic as web version)
-  // ---------------------------------------------------------
-  const editable = propEditable ?? false;
-
-  const finalData =
-    profileData?.candidateData ??
-    reduxUser;
-
-  const finalPhotos =
-    propPhotos ??
-    profileData?.photos ??
-    reduxPhotos;
-
+  const finalPhotos = componentPhotos ?? params.photos ?? reduxPhotos;
+  console.log(finalData)
   if (!finalData || finalPhotos.length === 0) return null;
 
   // ---------------------------------------------------------
@@ -196,36 +192,36 @@ const ProfileView = ({ editable: propEditable, profileData, photos: propPhotos, 
   // ---------------------------------------------------------
   // PROFILE BLOCK GROUPS
   // ---------------------------------------------------------
-const blocks = [
-  {
-    dob: finalData.dob,
-    location: finalData.location,
-    mother_tongue: finalData.mother_tongue,   // FIX
-    religion: finalData.religion_id,             // FIX
-  },
-  {
-    education: finalData.education_id,           // FIX
-    job_industry: finalData.job_industry_id,     // FIX
-    looking_for: finalData.looking_for_id,       // FIX
-    open_to: finalData.open_to_id,               // FIX
-  },
-  {
-    drinking: finalData.drinking_id,
-    smoking: finalData.smoking_id,
-    workout: finalData.workout_id,
-    dietary: finalData.dietary_id,
-    sleeping_habit: finalData.sleeping_habit_id,
-  },
-  {
-    love_style: finalData.love_style_id,
-    communication_style: finalData.communication_style_id,
-    family_plan: finalData.family_plan_id,
-    personality_type: finalData.personality_type_id,
-    pet: finalData.pet_id,
-    zodiac: finalData.zodiac_id,
-    preferred_gender: finalData.preferred_gender_id,
-  },
-];
+  const blocks = [
+    {
+      dob: finalData.dob,
+      location: finalData.location,
+      mother_tongue: finalData.mother_tongue,   // FIX
+      religion: finalData.religion_id,             // FIX
+    },
+    {
+      education: finalData.education_id,           // FIX
+      job_industry: finalData.job_industry_id,     // FIX
+      looking_for: finalData.looking_for_id,       // FIX
+      open_to: finalData.open_to_id,               // FIX
+    },
+    {
+      drinking: finalData.drinking_id,
+      smoking: finalData.smoking_id,
+      workout: finalData.workout_id,
+      dietary: finalData.dietary_id,
+      sleeping_habit: finalData.sleeping_habit_id,
+    },
+    {
+      love_style: finalData.love_style_id,
+      communication_style: finalData.communication_style_id,
+      family_plan: finalData.family_plan_id,
+      personality_type: finalData.personality_type_id,
+      pet: finalData.pet_id,
+      zodiac: finalData.zodiac_id,
+      preferred_gender: finalData.preferred_gender_id,
+    },
+  ];
 
   // ---------------------------------------------------------
   // UI
@@ -234,9 +230,9 @@ const blocks = [
     <View style={{ flex: 1, backgroundColor: "#000" }}>
 
       {/* HEADER */}
-      {!editable && (
+      {!isEditable && (
         <View style={styles.actionBar}>
-          <TouchableOpacity onPress={onBack}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={26} color="white" />
           </TouchableOpacity>
 
@@ -250,11 +246,12 @@ const blocks = [
 
         {/* MAIN CARD */}
         <View style={styles.card}>
-
-          <PhotoInput
-            imageUrl={config.urlConverter(finalPhotos[0]?.photo_url)}
-            disabled={!editable}
-          />
+          <View style={styles.photoContainer}>
+            <PhotoInput
+              imageUrl={config.urlConverter(finalPhotos[1]?.photo_url)}
+              disabled={!isEditable}
+            />
+          </View>
 
           <Text style={styles.name}>{finalData.user_name}</Text>
           <Text style={styles.tagline}>{finalData.tagline}</Text>
@@ -262,7 +259,7 @@ const blocks = [
           <Text style={styles.label}>Bio</Text>
           <TextInput
             style={styles.textArea}
-            editable={editable}
+            editable={isEditable}
             value={profile.bio || ""}
             onChangeText={v => handleChange("bio", v)}
           />
@@ -276,7 +273,7 @@ const blocks = [
                 style={styles.input}
                 keyboardType="numeric"
                 value={profile.height?.toString() || ""}
-                editable={editable}
+                editable={isEditable}
                 onChangeText={v => handleChange("height", v)}
               />
             </View>
@@ -287,7 +284,7 @@ const blocks = [
                 style={styles.input}
                 keyboardType="numeric"
                 value={profile.weight?.toString() || ""}
-                editable={editable}
+                editable={isEditable}
                 onChangeText={v => handleChange("weight", v)}
               />
             </View>
@@ -297,25 +294,25 @@ const blocks = [
                 label="Gender"
                 value={profile.gender}
                 options={genderList}
-                noDropdown={!editable}
+                noDropdown={!isEditable}
                 onChange={v => handleChange("gender", v)}
               />
             </View>
           </View>
 
-          {(editable || profile.image_prompt) && (
+          {(isEditable || profile.image_prompt) && (
             <>
               <Text style={styles.label}>Image Prompt</Text>
               <TextInput
                 style={styles.textArea}
-                editable={editable}
+                editable={isEditable}
                 value={profile.image_prompt}
                 onChangeText={v => handleChange("image_prompt", v)}
               />
             </>
           )}
 
-          {editable && Object.keys(dirty).length > 0 && (
+          {isEditable && Object.keys(dirty).length > 0 && (
             <View style={styles.saveRow}>
               <TouchableOpacity style={styles.cancelBtn} onPress={handleCancel}>
                 <Text style={styles.cancelTxt}>Cancel</Text>
@@ -335,7 +332,7 @@ const blocks = [
             key={i}
             dataObj={grp}
             photos={finalPhotos}
-            editable={editable}
+            editable={isEditable}
             index={Math.min(i + 1, finalPhotos.length - 1)}
             reverse={i % 2 === 1}
           />
@@ -421,6 +418,14 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     marginBottom: 30,
   },
+
+  photoContainer: {
+    width: '100%',
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    marginBottom: 10,
+  },
+
   name: {
     color: "white",
     fontSize: 26,
@@ -443,6 +448,8 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 10,
     color: "white",
+    minHeight: 44,
+    justifyContent: 'center',
   },
   textArea: {
     backgroundColor: "#1c1c1c",

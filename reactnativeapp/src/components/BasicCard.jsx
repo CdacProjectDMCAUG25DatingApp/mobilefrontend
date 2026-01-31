@@ -3,8 +3,8 @@ import { View, Text, Image, StyleSheet } from "react-native";
 import config from "../services/config";
 
 export default function BasicCard({ candidate }) {
-  const user = candidate.candidateData;
 
+  const user = candidate.candidateData;
   return (
     <View style={styles.card}>
 

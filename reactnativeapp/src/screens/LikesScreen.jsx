@@ -12,15 +12,15 @@ import {
 import axios from "axios";
 import config from "../services/config";
 import LikeCard from "../components/LikeCard";
-import ProfileView from "../screens/ProfileView";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
 
 export default function LikesScreen() {
+  const navigation = useNavigation();
+
   const [likes, setLikes] = useState([]);
   const [matches, setMatches] = useState([]);
   const [token, setToken] = useState(null);
-
-  const [showProfile, setShowProfile] = useState(false);
-  const [profileData, setProfileData] = useState(null);
 
   const [refreshKey, setRefreshKey] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
@@ -74,28 +74,26 @@ export default function LikesScreen() {
     setTimeout(() => setRefreshing(false), 600);
   };
 
-  const openFullProfile = async (user) => {
+  const openFullProfile = async (candidateToken) => {
     try {
-      const headers = { token: user.token };
-
-      const detailsRes = await axios.get(
-        `${config.BASE_URL}/likeesandmatches/like/likeduserdetails`,
-        { headers }
+      const profileRes = await axios.get(
+        `${config.BASE_URL}/user/userdetails`,
+        { headers: { token: candidateToken } }
       );
 
-      const photosRes = await axios.get(
-        `${config.BASE_URL}/likeesandmatches/like/likeduserphotos`,
-        { headers }
+      const photoRes = await axios.get(
+        `${config.BASE_URL}/photos/userphotos`,
+        { headers: { token: candidateToken } }
       );
 
-      setProfileData({
-        candidateData: detailsRes.data.data,
-        photos: photosRes.data.data,
+      navigation.navigate("ProfileViewLikes", {
+        profileData: profileRes.data.data,
+        photos: photoRes.data.data,
+        propEditable: false,
       });
 
-      setShowProfile(true);
     } catch (err) {
-      console.log("Failed loading full profile", err);
+      console.log("Failed to load profile:", err);
     }
   };
 
@@ -125,7 +123,6 @@ export default function LikesScreen() {
       );
 
       const uid = res?.data?.data?.uid;
-
       fadeAndRemove(uid, "likes");
 
     } catch (err) {
@@ -133,8 +130,6 @@ export default function LikesScreen() {
       console.log("IGNORE ERROR:", err);
     }
   };
-
-
 
   const removeMatch = async (candidateToken) => {
     try {
@@ -163,17 +158,6 @@ export default function LikesScreen() {
     });
   };
 
-  if (showProfile && profileData) {
-    return (
-      <View style={{ flex: 1, backgroundColor: "#000"}}>
-        <ProfileView editable={false}
-          profileData={profileData}
-          onBack={() => setShowProfile(false)}
-        />
-      </View>
-    );
-  }
-
   return (
     <ScrollView
       style={styles.pageContainer}
@@ -198,7 +182,7 @@ export default function LikesScreen() {
                 showLikeBack
                 onLikeBack={likeBack}
                 onIgnore={ignoreUser}
-                onCardClick={openFullProfile}
+                onCardClick={() => openFullProfile(user.token)}
               />
             </Animated.View>
           );
@@ -220,7 +204,7 @@ export default function LikesScreen() {
                 showMessage
                 showRemove
                 onRemove={() => removeMatch(user.token)}
-                onCardClick={openFullProfile}
+                onCardClick={() => openFullProfile(user.token)}
               />
             </Animated.View>
           );

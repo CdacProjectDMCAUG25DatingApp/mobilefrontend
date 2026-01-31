@@ -33,6 +33,28 @@ export default function ProfileViewBlock({ dataObj, photos, editable, index }) {
   // Lookup lists
   const [lookups, setLookups] = useState({});
 
+  const fieldFixMap = {
+    job_industry: "job_industry_id",
+    education: "education_id",
+    religion: "religion_id",
+    mother_tongue: "mother_tongue_id",
+    love_style: "love_style_id",
+    communication_style: "communication_style_id",
+    personality_type: "personality_type_id",
+    preferred_gender: "preferred_gender_id",
+    looking_for: "looking_for_id",
+    open_to: "open_to_id",
+    family_plan: "family_plan_id",
+    drinking: "drinking_id",
+    smoking: "smoking_id",
+    workout: "workout_id",
+    dietary: "dietary_id",
+    sleeping_habit: "sleeping_habit_id",
+    zodiac: "zodiac_id",
+    pet: "pet_id",
+  };
+
+
   const apiEndpoints = {
     job_industry: "job-industry",
     looking_for: "lookingfor",
@@ -91,16 +113,19 @@ export default function ProfileViewBlock({ dataObj, photos, editable, index }) {
 
   // ---------------- HANDLE CHANGE ----------------
   const handleChange = (key, value) => {
-    setProfile((p) => ({ ...p, [key]: value }));
+    const finalKey = fieldFixMap[key] || key;
 
-    if (original[key] !== value) {
-      setDirty((d) => ({ ...d, [key]: value }));
+    setProfile((p) => ({ ...p, [finalKey]: value }));
+
+    if (original[finalKey] !== value) {
+      setDirty((d) => ({ ...d, [finalKey]: value }));
     } else {
       const copy = { ...dirty };
-      delete copy[key];
+      delete copy[finalKey];
       setDirty(copy);
     }
   };
+
 
   // ---------------- SAVE SECTION -
   // ---------------
@@ -161,7 +186,7 @@ export default function ProfileViewBlock({ dataObj, photos, editable, index }) {
       {/* PHOTO */}
       <View style={styles.photoContainer}>
         <PhotoInput
-          imageUrl={config.urlConverter(photos[index]?.photo_url)}
+          imageUrl={config.urlConverter(photos[index+1]?.photo_url)}
           disabled={!editable}
         />
       </View>
@@ -238,18 +263,6 @@ export default function ProfileViewBlock({ dataObj, photos, editable, index }) {
               </View>
             );
           }
-
-          return (
-            <View key={key} style={styles.section}>
-              <Text style={styles.label}>{key.replace(/_/g, " ")}</Text>
-              <TextInput
-                editable={editable}
-                value={value?.toString() || ""}
-                style={styles.input}
-                onChangeText={(t) => handleChange(key, t)}
-              />
-            </View>
-          );
         })}
 
       {/* ACTION BUTTONS */}

@@ -1,21 +1,20 @@
 import React, { useEffect, useState, useRef } from "react";
 import {
-    View,
-    StyleSheet,
-    TouchableOpacity,
-    Text,
-    Animated,
-    ScrollView,
-    RefreshControl,
+  View,
+  StyleSheet,
+  Animated,
+  Text,
+  ScrollView,
+  RefreshControl,
 } from "react-native";
 
+import { useNavigation } from "@react-navigation/native";
 import Swiper from "react-native-deck-swiper";
 import BasicCard from "./BasicCard";
-import ProfileView from "../screens/ProfileView";
 
 import {
-    serviceGetCandidate,
-    serviceGetCandidatesAgain,
+  serviceGetCandidate,
+  serviceGetCandidatesAgain,
 } from "../services/interactions";
 
 import axios from "axios";
@@ -23,115 +22,156 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import config from "../services/config";
 
 export default function SwipeCardStack() {
-    const [cards, setCards] = useState([]);
-    const [index, setIndex] = useState(0);
-    const [showProfile, setShowProfile] = useState(false);
-    const [refreshing, setRefreshing] = useState(false);
+  const navigation = useNavigation();
 
-    const fadeAnim = useRef(new Animated.Value(1)).current;
+  const [cards, setCards] = useState([]);
+  const [index, setIndex] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
 
-    useEffect(() => {
-        loadCards();
-    }, []);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
 
-    const loadCards = async () => {
-        let data = await serviceGetCandidate();
-        if (!data?.length) data = await serviceGetCandidatesAgain();
+  useEffect(() => {
+    loadCards();
+  }, []);
 
-        setCards(data);
-        setIndex(0);
-    };
+  const loadCards = async () => {
+    let data = await serviceGetCandidate();
+    if (!data?.length) data = await serviceGetCandidatesAgain();
+    setCards(data);
+    setIndex(0);
+  };
 
-    const sendSwipeToBackend = async (direction, token) => {
-        const userToken = await AsyncStorage.getItem("token");
+  const sendSwipeToBackend = async (direction, token) => {
+    const userToken = await AsyncStorage.getItem("token");
 
-        const url =
-            direction === "right"
-                ? `${config.BASE_URL}/swipe/right`
-                : `${config.BASE_URL}/swipe/left`;
+    const url =
+      direction === "right"
+        ? `${config.BASE_URL}/swipe/right`
+        : `${config.BASE_URL}/swipe/left`;
 
-        await axios.post(
-            url,
-            { swiped_token: token },
-            { headers: { token: userToken } }
-        );
-    };
-
-    const openProfile = () => setShowProfile(true);
-    const goBackToCards = () => setShowProfile(false);
-
-    const onRefresh = async () => {
-        setRefreshing(true);
-        await loadCards();       // reload cards
-        setTimeout(() => setRefreshing(false), 300);
-    };
-
-
-    return (
-        <ScrollView
-            style={{ flex: 1, backgroundColor: "#000" }}
-            refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="white" />
-            }
-        >
-            <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
-                {showProfile ? (
-                    <View style={{ flex: 1 }}>
-                        <ProfileView
-                            editable={false}
-                            profileData={cards[index]}
-                            showMenu={true}
-                            onBack={goBackToCards}
-                        />
-                    </View>
-                ) : (
-                    cards.length > 0 && (
-                        <Swiper
-                            cards={cards}
-                            cardIndex={index}
-                            backgroundColor="black"
-                            verticalSwipe={false}
-                            disableTopSwipe
-                            disableBottomSwipe
-                            onSwiped={(i) => {
-                                const next = i + 1;
-                                if (next < cards.length) setIndex(next);
-                            }}
-                            onSwipedRight={(i) =>
-                                sendSwipeToBackend("right", cards[i].token)
-                            }
-                            onSwipedLeft={(i) =>
-                                sendSwipeToBackend("left", cards[i].token)
-                            }
-                            onSwipedAll={async () => {
-                                setIndex(0);
-                                setCards([]);
-
-                                setTimeout(async () => {
-                                    await loadCards();
-                                }, 150);
-                            }}
-                            onTapCard={(i) => {
-                                setIndex(i);
-                                openProfile();
-                            }}
-                            renderCard={(card) => (
-                                <View style={{ width: "100%", height: "100%" }}>
-                                    <BasicCard candidate={card} />
-                                </View>
-                            )}
-                        />
-                    )
-                )}
-            </Animated.View>
-        </ScrollView>
+    await axios.post(
+      url,
+      { swiped_token: token },
+      { headers: { token: userToken } }
     );
+  };
 
+  // ------------------------
+  // FETCH FULL USER PROFILE
+  // ------------------------
+  const openFullProfile = async (candidateToken) => {
+    const userToken = await AsyncStorage.getItem("token");
+
+    try {
+      const profileDataRes = await axios.get(
+        `${config.BASE_URL}/user/userdetails`,
+        { headers: { token: candidateToken } }
+      );
+      const photoRes = await axios.get(
+        `${config.BASE_URL}/photos/userphotos`,
+        { headers: { token: candidateToken } }
+      );
+      const fullProfile = profileDataRes.data.data;
+      const fullPhotos = photoRes.data.data;
+      
+      navigation.navigate("ProfileViewPeople", {
+        profileData: fullProfile,
+        photos : fullPhotos,
+        propEditable: false,
+      });
+
+    } catch (err) {
+      console.log("Failed to load profile:", err);
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadCards();
+    setTimeout(() => setRefreshing(false), 300);
+  };
+
+  const NoCards = () => (
+    <View style={styles.emptyContainer}>
+      <Text style={styles.emptyText}>No cards available</Text>
+      <Text style={styles.emptySub}>Pull to refresh</Text>
+    </View>
+  );
+
+  return (
+    <ScrollView
+      style={{ flex: 1, backgroundColor: "#000" }}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor="white"
+        />
+      }
+    >
+      <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+        {cards.length === 0 ? (
+          <NoCards />
+        ) : (
+          <Swiper
+            cards={cards}
+            cardIndex={index}
+            backgroundColor="black"
+            verticalSwipe={false}
+            disableTopSwipe
+            disableBottomSwipe
+            onTapCardDeadZone={0}
+            onSwiped={(i) => {
+                console.log(cards[i])
+              const next = i + 1;
+              if (next < cards.length) setIndex(next);
+            }}
+            onSwipedRight={(i) =>
+              sendSwipeToBackend("right", cards[i].token)
+            }
+            onSwipedLeft={(i) =>
+              sendSwipeToBackend("left", cards[i].token)
+            }
+            onSwipedAll={async () => {
+              setCards([]);
+              setTimeout(async () => {
+                await loadCards();
+              }, 150);
+            }}
+            onTapCard={(i) => {
+              const candidate = cards[i];
+              openFullProfile(candidate.token);
+            }}
+            renderCard={(card) => (
+              <View style={{ width: "100%", height: "100%" }}>
+                <BasicCard candidate={card} />
+              </View>
+            )}
+          />
+        )}
+      </Animated.View>
+    </ScrollView>
+  );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#000",
-    },
+  container: {
+    flex: 1,
+    backgroundColor: "#000",
+  },
+
+  emptyContainer: {
+    height: 500,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyText: {
+    color: "white",
+    fontSize: 22,
+    fontWeight: "700",
+  },
+  emptySub: {
+    color: "#aaa",
+    marginTop: 8,
+  },
 });

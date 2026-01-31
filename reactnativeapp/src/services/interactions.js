@@ -8,7 +8,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 // ---------------------------------------------------
 export const serviceGetCandidate = async () => {
   try {
-    const token = await AsyncStorage.getItem("token"); // ✅ MUST AWAIT
+    const token = await AsyncStorage.getItem("token"); //  MUST AWAIT
 
     if (!token) {
       Toast.show({
