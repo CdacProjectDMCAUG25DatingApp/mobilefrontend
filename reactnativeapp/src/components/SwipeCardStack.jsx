@@ -74,7 +74,7 @@ export default function SwipeCardStack() {
       const fullProfile = profileDataRes.data.data;
       const fullPhotos = photoRes.data.data;
       
-      navigation.navigate("ProfileViewPeople", {
+      navigation.navigate("PeopleProfile", {
         profileData: fullProfile,
         photos : fullPhotos,
         propEditable: false,
@@ -122,7 +122,6 @@ export default function SwipeCardStack() {
             disableBottomSwipe
             onTapCardDeadZone={0}
             onSwiped={(i) => {
-                console.log(cards[i])
               const next = i + 1;
               if (next < cards.length) setIndex(next);
             }}
@@ -136,7 +135,7 @@ export default function SwipeCardStack() {
               setCards([]);
               setTimeout(async () => {
                 await loadCards();
-              }, 150);
+              }, 50);
             }}
             onTapCard={(i) => {
               const candidate = cards[i];

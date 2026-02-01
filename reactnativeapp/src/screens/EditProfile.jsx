@@ -4,9 +4,7 @@ import ProfileView from './ProfileView'
 
 const EditProfile = () => {
   return (
-    <View>
-      <ProfileView componentEditable={true}/>
-    </View>
+      <ProfileView editable={true}/>
   )
 }
 

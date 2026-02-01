@@ -13,6 +13,8 @@ import BlockedUsersModal from "../components/BlockedUsersModal";  // ✅ NEW
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
+import { useDispatch } from 'react-redux';
+import { logout } from "../redux/userSlice";
 
 export default function Settings() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -20,6 +22,7 @@ export default function Settings() {
   const [showBlockedModal, setShowBlockedModal] = useState(false); // ✅ NEW
 
   const navigation = useNavigation();
+  const dispatch = useDispatch();
 
   const handleLogout = async () => {
     await AsyncStorage.clear();
@@ -27,11 +30,8 @@ export default function Settings() {
       {
         text: "OK",
         onPress: () =>
-          navigation.reset({
-            index: 0,
-            routes: [{ name: "Login" }],
-          }),
-      },
+          dispatch(logout())
+      }
     ]);
   };
 
@@ -40,7 +40,7 @@ export default function Settings() {
       <Text style={styles.title}>Settings</Text>
 
       <View style={styles.card}>
-        
+
         <TouchableOpacity
           style={styles.option}
           onPress={() => setShowPasswordModal(true)}
@@ -155,4 +155,3 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
- 

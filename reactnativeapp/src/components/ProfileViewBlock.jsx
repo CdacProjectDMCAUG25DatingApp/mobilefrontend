@@ -21,7 +21,6 @@ import { updateUserDetails } from "../redux/userDetailsThunks";
 
 export default function ProfileViewBlock({ dataObj, photos, editable, index }) {
   const dispatch = useDispatch();
-
   // Redux state
   const reduxDetails = useSelector((s) => s.userDetails.data);
   // Local state

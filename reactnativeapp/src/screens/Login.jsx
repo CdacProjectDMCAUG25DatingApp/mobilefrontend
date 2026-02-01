@@ -29,7 +29,6 @@ const Login = ({ navigation }) => {
     }
 
     try {
-      // HIT LOGIN API
       const result = await loginUser(email, password);
 
       if (result.status !== "success") {
@@ -38,21 +37,16 @@ const Login = ({ navigation }) => {
       }
 
       const { token, userdetails, photos, onboarding, name, email: e, mobile } = result.data;
-      // SAVE TOKEN IN STORAGE (use AsyncStorage)
+
+      // Save token
       await AsyncStorage.setItem("token", token);
 
-      // set basic user
       dispatch(setUser({ token, name, email: e, mobile }));
       dispatch(setUserDetails(userdetails || {}));
       dispatch(setPhotos(photos || []));
 
-
       Alert.alert("Success", "Login Successful");
 
-      // HEADER WITH TOKEN
-      const headers = { token: await AsyncStorage.getItem("token") };
-
-      // ONBOARDING NAVIGATION (MATCHES YOUR WEB LOGIC)
       if (onboarding.needs_profile)
         return navigation.replace("CreateProfile");
 
@@ -60,18 +54,14 @@ const Login = ({ navigation }) => {
         return navigation.replace("AddPhotos");
 
       if (onboarding.needs_preferences)
-        return navigation.replace("UserPreferencaes");
+        return navigation.replace("UserPreferences");  
 
-      // ALL SET → GO TO HOME
-      navigation.reset({
-        index: 0,
-        routes: [{ name: "Home" }],
-      });
     } catch (ex) {
       console.log("Login error:", ex);
       Alert.alert("Error", "Something went wrong");
     }
   };
+
 
   return (
     <View style={styles.container}>

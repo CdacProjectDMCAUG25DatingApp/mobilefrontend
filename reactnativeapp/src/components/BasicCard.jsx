@@ -3,15 +3,15 @@ import { View, Text, Image, StyleSheet } from "react-native";
 import config from "../services/config";
 
 export default function BasicCard({ candidate }) {
-
-  const user = candidate.candidateData;
+  
+  const user = candidate;
   return (
     <View style={styles.card}>
 
       {/* IMAGE */}
       <View style={styles.imageWrapper}>
         <Image
-          source={{ uri: config.urlConverter(candidate.photos[0].photo_url) }}
+          source={{ uri: config.urlConverter(candidate.photo) }}
           style={styles.image}
         />
       </View>

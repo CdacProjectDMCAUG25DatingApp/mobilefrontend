@@ -27,7 +27,6 @@ export const loadUserDetails = () => async (dispatch) => {
 export const updateUserDetails = (fields) => async (dispatch) => {
   const token = await getToken();
   const headers = { token };
-
   // Update fields
   await axios.put(`${config.BASE_URL}/user/userdetails`, fields, { headers });
 

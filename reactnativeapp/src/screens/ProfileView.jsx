@@ -43,7 +43,6 @@ const ProfileView = ({ editable: componentEditable, profileData: componentData, 
 
   const reduxPhotos = useSelector(state => state.photos.data);
   const finalPhotos = componentPhotos ?? params.photos ?? reduxPhotos;
-  console.log(finalData)
   if (!finalData || finalPhotos.length === 0) return null;
 
   // ---------------------------------------------------------
@@ -196,14 +195,14 @@ const ProfileView = ({ editable: componentEditable, profileData: componentData, 
     {
       dob: finalData.dob,
       location: finalData.location,
-      mother_tongue: finalData.mother_tongue,   // FIX
-      religion: finalData.religion_id,             // FIX
+      mother_tongue: finalData.mother_tongue,  
+      religion: finalData.religion_id,             
     },
     {
-      education: finalData.education_id,           // FIX
-      job_industry: finalData.job_industry_id,     // FIX
-      looking_for: finalData.looking_for_id,       // FIX
-      open_to: finalData.open_to_id,               // FIX
+      education: finalData.education_id,       
+      job_industry: finalData.job_industry_id,     
+      looking_for: finalData.looking_for_id,       
+      open_to: finalData.open_to_id,               
     },
     {
       drinking: finalData.drinking_id,
