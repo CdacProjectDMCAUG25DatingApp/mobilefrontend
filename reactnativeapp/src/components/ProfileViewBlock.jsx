@@ -19,7 +19,7 @@ import { setPhotos } from "../redux/photosSlice";
 import { setUserDetails } from "../redux/userDetailsSlice";
 import { updateUserDetails } from "../redux/userDetailsThunks";
 
-export default function ProfileViewBlock({ dataObj, photos, editable, index }) {
+function ProfileViewBlock({ dataObj, photos, editable, index }) {
   const dispatch = useDispatch();
   // Redux state
   const reduxDetails = useSelector((s) => s.userDetails.data);
@@ -288,6 +288,7 @@ export default function ProfileViewBlock({ dataObj, photos, editable, index }) {
     </View>
   );
 }
+export default React.memo(ProfileViewBlock);
 
 /* ---------------- STYLES ---------------- */
 

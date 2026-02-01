@@ -1,6 +1,6 @@
 // src/screens/ProfileView.jsx
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
   ScrollView,
@@ -12,6 +12,13 @@ import {
   StyleSheet
 } from "react-native";
 
+import {
+  Menu,
+  MenuOptions,
+  MenuTrigger,
+  MenuOption,
+} from "react-native-popup-menu";
+
 import { Ionicons } from "@expo/vector-icons";
 import axios from "axios";
 import config from "../services/config";
@@ -22,6 +29,7 @@ import { useSelector, useDispatch } from "react-redux";
 import PhotoInput from "../components/PhotoInput";
 import MySelect from "../components/MySelect";
 import ProfileViewBlock from "../components/ProfileViewBlock";
+import ReportModal from "../components/ReportModal";
 
 import { setPhotos } from "../redux/photosSlice";
 import { setUserDetails } from "../redux/userDetailsSlice";
@@ -30,20 +38,23 @@ import { useNavigation, useRoute } from "@react-navigation/native";
 
 const ProfileView = ({ editable: componentEditable, profileData: componentData, photos: componentPhotos }) => {
   const route = useRoute();
-   const params = route.params || {};
+  const params = route.params || {};
 
   const navigation = useNavigation();
   const dispatch = useDispatch();
-  
+
   const isEditable = componentEditable ?? params.propEditable ?? false;
 
   // Redux data
   const reduxUser = useSelector(state => state.userDetails.data);
   const finalData = componentData ?? params.profileData ?? reduxUser;
-
+  console.log(finalData)
   const reduxPhotos = useSelector(state => state.photos.data);
   const finalPhotos = componentPhotos ?? params.photos ?? reduxPhotos;
   if (!finalData || finalPhotos.length === 0) return null;
+
+
+
 
   // ---------------------------------------------------------
   // LOCAL STATE
@@ -56,8 +67,7 @@ const ProfileView = ({ editable: componentEditable, profileData: componentData, 
   const [dirty, setDirty] = useState({});
 
   const [reportVisible, setReportVisible] = useState(false);
-  const [reason, setReason] = useState(null);
-  const [customReason, setCustomReason] = useState("");
+
 
   // ---------------------------------------------------------
   // LOAD INITIAL API DATA
@@ -67,27 +77,47 @@ const ProfileView = ({ editable: componentEditable, profileData: componentData, 
       const token = await config.getToken("token");
       const headers = { token };
 
-      axios.get(config.BASE_URL + "/api/gender", { headers })
-        .then(r => setGenderList(r.data.data));
+      const [gendersRes, reasonsRes] = await Promise.all([
+        axios.get(config.BASE_URL + "/api/gender", { headers }),
+        axios.get(config.BASE_URL + "/api/report-reasons", { headers })
+      ]);
 
-      axios.get(config.BASE_URL + "/api/report-reasons", { headers })
-        .then(r => setReportReasons(r.data.data));
+      setGenderList(gendersRes.data.data);
+      setReportReasons(reasonsRes.data.data);
     })();
   }, []);
+
+  //Block User
+  const handleBlock = async () => {
+    try {
+      const token = await config.getToken("token");
+      await axios.post(
+        config.BASE_URL + "/settings/block",
+        { blocked_id: finalData?.token },
+        { headers: { token } }
+      );
+      Toast.show({ type: "success", text1: "User Blocked" });
+    } catch (err) {
+      console.log("Block failed:", err?.response?.data || err);
+      Toast.show({ type: "error", text1: "Failed to block user" });
+    }
+  };
 
   // ---------------------------------------------------------
   // INITIALIZE PROFILE
   // ---------------------------------------------------------
   useEffect(() => {
-    const merged = {
+    setProfile(prev => ({
       ...finalData,
       image_prompt: finalPhotos?.[0]?.prompt || "",
-    };
-
-    setProfile(merged);
-    setOriginal(merged);
+    }));
+    setOriginal({
+      ...finalData,
+      image_prompt: finalPhotos?.[0]?.prompt || "",
+    });
     setDirty({});
   }, [finalData, finalPhotos]);
+
 
   // ---------------------------------------------------------
   // CHANGE HANDLER
@@ -171,7 +201,7 @@ const ProfileView = ({ editable: componentEditable, profileData: componentData, 
       await axios.post(
         config.BASE_URL + "/settings/report",
         {
-          reported_id: profileData?.token || finalData?.token,
+          reported_id: finalData?.token,
           reason_id: reason,
           reason_custom: reason === 99 ? customReason : null,
         },
@@ -188,21 +218,35 @@ const ProfileView = ({ editable: componentEditable, profileData: componentData, 
     setCustomReason("");
   };
 
+  const menuStyles = {
+    optionsContainer: {
+      backgroundColor: "#1c1c1c",
+      borderRadius: 6,
+      width: 140,
+      paddingVertical: 6,
+    },
+    optionText: {
+      color: "white",
+      padding: 10,
+      fontSize: 15,
+    },
+  };
+
   // ---------------------------------------------------------
   // PROFILE BLOCK GROUPS
   // ---------------------------------------------------------
-  const blocks = [
+  const blocks = useMemo(() => [
     {
       dob: finalData.dob,
       location: finalData.location,
-      mother_tongue: finalData.mother_tongue,  
-      religion: finalData.religion_id,             
+      mother_tongue: finalData.mother_tongue,
+      religion: finalData.religion_id,
     },
     {
-      education: finalData.education_id,       
-      job_industry: finalData.job_industry_id,     
-      looking_for: finalData.looking_for_id,       
-      open_to: finalData.open_to_id,               
+      education: finalData.education_id,
+      job_industry: finalData.job_industry_id,
+      looking_for: finalData.looking_for_id,
+      open_to: finalData.open_to_id,
     },
     {
       drinking: finalData.drinking_id,
@@ -220,24 +264,35 @@ const ProfileView = ({ editable: componentEditable, profileData: componentData, 
       zodiac: finalData.zodiac_id,
       preferred_gender: finalData.preferred_gender_id,
     },
-  ];
+  ], [finalData]);
+
+  const mainPhoto = useMemo(() => {
+    return config.urlConverter(finalPhotos[1]?.photo_url);
+  }, [finalPhotos]);
+
 
   // ---------------------------------------------------------
   // UI
   // ---------------------------------------------------------
   return (
-    <View style={{ flex: 1, backgroundColor: "#000" }}>
+    <View style={styles.pageContainer}>
 
       {/* HEADER */}
       {!isEditable && (
         <View style={styles.actionBar}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <Ionicons name="chevron-back" size={26} color="white" />
+            <Ionicons name="chevron-back" size={28} color="white" />
           </TouchableOpacity>
+          <Menu>
+            <MenuTrigger>
+              <Ionicons name="ellipsis-vertical" size={26} color="white" />
+            </MenuTrigger>
 
-          <TouchableOpacity onPress={() => setReportVisible(true)}>
-            <Ionicons name="ellipsis-vertical" size={26} color="white" />
-          </TouchableOpacity>
+            <MenuOptions customStyles={menuStyles}>
+              <MenuOption onSelect={() => setReportVisible(true)} text="Report" />
+              <MenuOption onSelect={handleBlock} text="Block" />
+            </MenuOptions>
+          </Menu>
         </View>
       )}
 
@@ -247,7 +302,7 @@ const ProfileView = ({ editable: componentEditable, profileData: componentData, 
         <View style={styles.card}>
           <View style={styles.photoContainer}>
             <PhotoInput
-              imageUrl={config.urlConverter(finalPhotos[1]?.photo_url)}
+              imageUrl={mainPhoto}
               disabled={!isEditable}
             />
           </View>
@@ -341,52 +396,13 @@ const ProfileView = ({ editable: componentEditable, profileData: componentData, 
 
       {/* REPORT MODAL */}
       {reportVisible && (
-        <KeyboardAvoidingView
-          style={styles.modalOverlay}
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
-        >
-          <View style={styles.modalBox}>
-
-            <Text style={styles.modalTitle}>Report User</Text>
-
-            <MySelect
-              label="Reason"
-              value={reason}
-              options={reportReasons.map(r => ({
-                id: r.reason_id,
-                name: r.name,
-              }))}
-              onChange={v => setReason(v)}
-            />
-
-            {reason === 99 && (
-              <TextInput
-                style={styles.modalInput}
-                placeholder="Enter custom reason..."
-                placeholderTextColor="#777"
-                value={customReason}
-                onChangeText={setCustomReason}
-              />
-            )}
-
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={styles.modalCancel}
-                onPress={() => setReportVisible(false)}
-              >
-                <Text style={styles.modalBtnTxt}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.modalSubmit}
-                onPress={submitReport}
-              >
-                <Text style={styles.modalBtnTxt}>Submit</Text>
-              </TouchableOpacity>
-            </View>
-
-          </View>
-        </KeyboardAvoidingView>
+        <ReportModal
+          visible={reportVisible}
+          onClose={() => setReportVisible(false)}
+          reportReasons={reportReasons}
+          reportedToken={finalData?.token}
+          styles={styles}
+        />
       )}
 
     </View>
@@ -408,6 +424,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 16,
   },
+  pageContainer: {
+    flex: 1, backgroundColor: "#000"
+  },
   container: {
     padding: 16,
   },
@@ -420,8 +439,8 @@ const styles = StyleSheet.create({
 
   photoContainer: {
     width: '100%',
-    alignItems: 'center', 
-    justifyContent: 'center', 
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 10,
   },
 

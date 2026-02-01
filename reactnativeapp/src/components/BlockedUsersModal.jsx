@@ -67,14 +67,7 @@ export default function BlockedUsersModal({ visible, onClose }) {
               {blockedUsers.map((u) => (
                 <LikeCard
                   key={u.block_id}
-                  user={{
-                    user_name: u.user_name,
-                    uid: u.blocked_id,
-                    photo_url: u.photo_url,
-                    dob: u.dob,
-                    gender: u.gender,
-                    tagline: u.tagline,
-                  }}
+                  user={u}
                   showRemove={true}
                   onRemove={() => unblockUser(u.blocked_id)}
                 />

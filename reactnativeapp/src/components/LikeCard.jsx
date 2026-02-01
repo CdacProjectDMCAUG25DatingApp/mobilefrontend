@@ -13,7 +13,7 @@ export default function LikeCard({
     user,
     showLikeBack,
     showMessage,
-    showRemove,
+    showRemove=false,
     onLikeBack,
     onIgnore,
     onChat,
@@ -50,7 +50,7 @@ export default function LikeCard({
                         <Text style={styles.subText}>Last Message: {user.last_message}</Text>
                     ) : (
                         <Text style={styles.subText}>
-                            {age} · {user.gender}
+                            {user.age} · {user.gender}
                         </Text>
                     )}
 
@@ -87,7 +87,7 @@ export default function LikeCard({
                     </TouchableOpacity>
                 )}
 
-                {onRemove && (
+                {showRemove && (
                     <TouchableOpacity
                         style={[styles.btn, styles.btnDanger]}
                         onPress={() => onRemove(user.token)}
