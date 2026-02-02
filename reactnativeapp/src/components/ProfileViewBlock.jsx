@@ -102,7 +102,7 @@ function ProfileViewBlock({ dataObj, photos, editable, index }) {
 
     const merged = {
       ...dataObj,
-      image_prompt: photos?.[index]?.prompt || "",
+      image_prompt: photos?.[index+1]?.prompt || "",
     };
 
     setProfile(merged);
@@ -140,11 +140,11 @@ function ProfileViewBlock({ dataObj, photos, editable, index }) {
 
     try {
       // 1. Update prompt
-      if (promptVal !== undefined && photos[index]?.photo_id) {
+      if (promptVal !== undefined && photos[index+1]?.photo_id) {
         await axios.patch(
-          `${config.BASE_URL}/user/photo/prompt`,
+          `${config.BASE_URL}/photos/prompt`,
           {
-            photo_id: photos[index].photo_id,
+            photo_id: photos[index+1].photo_id,
             prompt: promptVal,
           },
           { headers }

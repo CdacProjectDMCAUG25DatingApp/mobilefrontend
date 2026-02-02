@@ -10,14 +10,11 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import Toast from "react-native-toast-message";
-
-import { UserContext } from "../../context/UserContext";
 import config from "../../services/config";
 import { addUserPreferences } from "../../services/userpreferences";
 import MySelect from "../../components/MySelect";
 
 export default function UserPreferences({ navigation }) {
-    const { user } = useContext(UserContext);
 
     const [gender, setGender] = useState("");
     const [lookingFor, setLookingFor] = useState("");

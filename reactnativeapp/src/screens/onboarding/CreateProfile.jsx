@@ -1,6 +1,6 @@
 // src/screens/Profile/CreateProfile.js
 
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
     View,
     Text,
@@ -14,7 +14,6 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import config from "../../services/config";
-import { UserContext } from "../../context/UserContext";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import Toast from "react-native-toast-message";
 import { addUserProfile } from "../../services/userprofile";
@@ -23,7 +22,6 @@ import { addUserProfile } from "../../services/userprofile";
 import MySelect from "../../components/MySelect";
 
 export default function CreateProfile({ navigation }) {
-    const { user } = useContext(UserContext);
 
     // Form Data
     const [profile, setProfile] = useState({
@@ -162,16 +160,6 @@ export default function CreateProfile({ navigation }) {
     return (
         <ScrollView contentContainerStyle={styles.container}>
             <Text style={styles.title}>Create Profile</Text>
-
-            {/* NAME */}
-            <Label label="Name">
-                <Text style={styles.readonly}>{user?.name}</Text>
-            </Label>
-
-            {/* EMAIL */}
-            <Label label="Email">
-                <Text style={styles.readonly}>{user?.email}</Text>
-            </Label>
 
             {/* GENDER */}
             <MySelect

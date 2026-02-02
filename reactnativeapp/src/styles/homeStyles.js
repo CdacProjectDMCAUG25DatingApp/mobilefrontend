@@ -316,60 +316,74 @@ authLink: {
 },
 /* ===== LOGIN ===== */
 
-loginContainer: {
-  width: '100%',
-},
+  container: {
+    flex: 1,
+    backgroundColor: "#222222", // light grey-blue from the web design
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
 
-loginLabel: {
-  color: '#fff',
-  fontSize: 15,
-  marginBottom: 6,
-  marginTop: 10,
-},
+  loginContainer: {
+    width: "90%",
+    backgroundColor: "#0b0b0b", // dark section from web
+    padding: 30,
+    borderRadius: 16,
+    elevation: 8,
+    shadowColor: "#000",
+  },
 
-loginInput: {
-  borderWidth: 1,
-  borderColor: '#444',
-  borderRadius: 8,
-  paddingVertical: 12,
-  paddingHorizontal: 12,
-  color: '#fff',
-  fontSize: 15,
-  marginBottom: 14,
-  backgroundColor: '#000',
-},
+  loginLabel: {
+    color: "#e5e7eb", // light grey text
+    fontSize: 14,
+    marginBottom: 6,
+    fontWeight: "500",
+  },
 
-loginButton: {
-  backgroundColor: '#198754',
-  paddingVertical: 14,
-  borderRadius: 8,
-  alignItems: 'center',
-  marginTop: 10,
-  marginBottom: 20,
-},
+  loginInput: {
+    backgroundColor: "transparent",
+    borderWidth: 1,
+    borderColor: "#9ca3af", // similar to input border on web
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 10,
+    color: "white",
+    marginBottom: 20,
+    fontSize: 15,
+  },
 
-loginButtonText: {
-  color: '#fff',
-  fontSize: 16,
-  fontWeight: '600',
-},
+  loginButton: {
+    backgroundColor: "#ffffff",
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    marginTop: 10,
+  },
 
-loginLinkRow: {
-  flexDirection: 'row',
-  justifyContent: 'center',
-},
+  loginButtonText: {
+    color: "#000000",
+    fontSize: 15,
+    fontWeight: "600",
+  },
 
-loginLinkText: {
-  color: '#fff',
-  fontSize: 14,
-},
+  loginLinkRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    marginTop: 25,
+  },
 
-loginLink: {
-  color: '#4da3ff',
-  fontSize: 14,
-  marginLeft: 5,
-  textDecorationLine: 'underline',
-},
+  loginLinkText: {
+    color: "#d1d5db",
+    fontSize: 14,
+  },
+
+  loginLink: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+    textDecorationLine: "underline",
+  },
 
 
             });

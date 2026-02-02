@@ -1,14 +1,10 @@
-// src/screens/ProfileView.jsx
-
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   View,
   ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
   StyleSheet
 } from "react-native";
 
@@ -156,9 +152,9 @@ const ProfileView = ({ editable: componentEditable, profileData: componentData, 
 
       if (promptVal !== undefined) {
         await axios.patch(
-          config.BASE_URL + "/user/photo/prompt",
+          config.BASE_URL + "/photos/prompt",
           {
-            photo_id: finalPhotos[0].photo_id,
+            photo_id: finalPhotos[1].photo_id,
             prompt: promptVal,
           },
           { headers }
@@ -187,35 +183,6 @@ const ProfileView = ({ editable: componentEditable, profileData: componentData, 
   const handleCancel = () => {
     setProfile(original);
     setDirty({});
-  };
-
-  // ---------------------------------------------------------
-  // REPORT SUBMIT
-  // ---------------------------------------------------------
-  const submitReport = async () => {
-    if (!reason) return;
-
-    try {
-      const token = await config.getToken("token");
-
-      await axios.post(
-        config.BASE_URL + "/settings/report",
-        {
-          reported_id: finalData?.token,
-          reason_id: reason,
-          reason_custom: reason === 99 ? customReason : null,
-        },
-        { headers: { token } }
-      );
-
-      Toast.show({ type: "success", text1: "User Reported" });
-    } catch {
-      Toast.show({ type: "error", text1: "Failed to Report" });
-    }
-
-    setReportVisible(false);
-    setReason(null);
-    setCustomReason("");
   };
 
   const menuStyles = {
