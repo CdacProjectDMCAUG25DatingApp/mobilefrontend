@@ -9,7 +9,7 @@ import {
 
 import ChangePasswordModal from "../components/ChangePasswordModal";
 import FeedbackModal from "../components/FeedbackModal";
-import BlockedUsersModal from "../components/BlockedUsersModal";  // ✅ NEW
+import BlockedUsersModal from "../components/BlockedUsersModal";
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
@@ -19,7 +19,7 @@ import { logout } from "../redux/userSlice";
 export default function Settings() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
-  const [showBlockedModal, setShowBlockedModal] = useState(false); // ✅ NEW
+  const [showBlockedModal, setShowBlockedModal] = useState(false); 
 
   const navigation = useNavigation();
   const dispatch = useDispatch();
@@ -55,7 +55,7 @@ export default function Settings() {
           <Text style={styles.optionText}>Feedback</Text>
         </TouchableOpacity>
 
-        {/* ✅ NEW BLOCKED USERS OPTION */}
+
         <TouchableOpacity
           style={styles.option}
           onPress={() => setShowBlockedModal(true)}
@@ -83,7 +83,7 @@ export default function Settings() {
         onClose={() => setShowFeedbackModal(false)}
       />
 
-      {/* ✅ NEW MODAL */}
+
       <BlockedUsersModal
         visible={showBlockedModal}
         onClose={() => setShowBlockedModal(false)}

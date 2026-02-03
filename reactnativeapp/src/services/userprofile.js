@@ -20,10 +20,11 @@ export async function addUserProfile(
     dob,
     education,
     tagline,
-    jobIndustry
+    jobIndustry,
+    token
 ) {
     try {
-        const url = config.BASE_URL + "/user/userprofile";
+        const url = config.BASE_URL + "/user/profile";
 
         const body = {
             gender,
@@ -37,9 +38,6 @@ export async function addUserProfile(
             tagline,
             jobIndustry,
         };
-
-        const token = await AsyncStorage.getItem("token");
-
         const headers = { token };
 
         const response = await axios.post(url, body, { headers });

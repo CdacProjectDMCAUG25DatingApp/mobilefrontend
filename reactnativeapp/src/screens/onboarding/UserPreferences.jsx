@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import {
     View,
     Text,
@@ -13,150 +13,129 @@ import Toast from "react-native-toast-message";
 import config from "../../services/config";
 import { addUserPreferences } from "../../services/userpreferences";
 import MySelect from "../../components/MySelect";
+import { useDispatch } from "react-redux";
+import { setUserDetails } from "../../redux/userDetailsSlice";
+import { setUser } from "../../redux/userSlice";
 
-export default function UserPreferences({ navigation }) {
+export default function UserPreferences({ navigation, route }) {
+    const token = route.params.token;
+    const dispatch = useDispatch();
 
-    const [gender, setGender] = useState("");
-    const [lookingFor, setLookingFor] = useState("");
-    const [openTo, setOpenTo] = useState("");
-    const [zodiac, setZodiac] = useState("");
-    const [familyPlan, setFamilyPlan] = useState("");
-    const [education, setEducation] = useState("");
-    const [communicationStyle, setCommunicationStyle] = useState("");
-    const [lovestyle, setLoveStyle] = useState("");
-    const [drinking, setDrinking] = useState("");
-    const [smoking, setSmoking] = useState("");
-    const [workout, setWorkout] = useState("");
-    const [dietary, setDietary] = useState("");
-    const [sleepingHabit, setSleepingHabit] = useState("");
-    const [religion, setReligion] = useState("");
-    const [personalityType, setPersonalityType] = useState("");
-    const [pet, setPet] = useState("");
+    // FORM VALUES
+    const [form, setForm] = useState({
+        gender: "",
+        lookingFor: "",
+        openTo: "",
+        zodiac: "",
+        familyPlan: "",
+        education: "",
+        communicationStyle: "",
+        lovestyle: "",
+        drinking: "",
+        smoking: "",
+        workout: "",
+        dietary: "",
+        sleepingHabit: "",
+        religion: "",
+        personalityType: "",
+        pet: "",
+    });
 
-    // Lists
-    const [lookingForList, setLookingForList] = useState([]);
-    const [openToList, setOpenToList] = useState([]);
-    const [zodiacList, setZodiacList] = useState([]);
-    const [familyPlanList, setFamilyPlanList] = useState([]);
-    const [educationList, setEducationList] = useState([]);
-    const [communicationStyleList, setCommunicationStyleList] = useState([]);
-    const [loveStyleList, setLoveStyleList] = useState([]);
-    const [drinkingList, setDrinkingList] = useState([]);
-    const [smokingList, setSmokingList] = useState([]);
-    const [workoutList, setWorkoutList] = useState([]);
-    const [dietaryList, setDietaryList] = useState([]);
-    const [sleepingHabitList, setSleepingHabitList] = useState([]);
-    const [religionList, setReligionList] = useState([]);
-    const [personalityTypeList, setPersonalityTypeList] = useState([]);
-    const [petList, setPetList] = useState([]);
-    const [genderList, setGenderList] = useState([]);
+    const updateForm = useCallback((key, value) => {
+        setForm((prev) => ({ ...prev, [key]: value }));
+    }, []);
+
+    // LOOKUPS
+    const [lookups, setLookups] = useState({
+        lookingForList: [],
+        openToList: [],
+        zodiacList: [],
+        familyPlanList: [],
+        educationList: [],
+        communicationStyleList: [],
+        loveStyleList: [],
+        drinkingList: [],
+        smokingList: [],
+        workoutList: [],
+        dietaryList: [],
+        sleepingHabitList: [],
+        religionList: [],
+        personalityTypeList: [],
+        petList: [],
+        genderList: [],
+    });
 
     useEffect(() => {
         fetchAllLookups();
     }, []);
 
     const fetchAllLookups = async () => {
-        const token = await AsyncStorage.getItem("token");
         const headers = { token };
 
         try {
-            const [
-                lookingForRes,
-                openToRes,
-                zodiacRes,
-                familyPlanRes,
-                educationRes,
-                communicationStyleRes,
-                loveStyleRes,
-                drinkingRes,
-                smokingRes,
-                workoutRes,
-                dietaryRes,
-                sleepingHabitRes,
-                religionRes,
-                personalityTypeRes,
-                petRes,
-                genderRes,
-            ] = await Promise.all([
-                axios.get(config.BASE_URL + "/api/lookingfor", { headers }),
-                axios.get(config.BASE_URL + "/api/opento", { headers }),
-                axios.get(config.BASE_URL + "/api/zodiac", { headers }),
-                axios.get(config.BASE_URL + "/api/familyplan", { headers }),
-                axios.get(config.BASE_URL + "/api/education", { headers }),
-                axios.get(config.BASE_URL + "/api/communicationstyle", { headers }),
-                axios.get(config.BASE_URL + "/api/lovestyle", { headers }),
-                axios.get(config.BASE_URL + "/api/drinking", { headers }),
-                axios.get(config.BASE_URL + "/api/smoking", { headers }),
-                axios.get(config.BASE_URL + "/api/workout", { headers }),
-                axios.get(config.BASE_URL + "/api/dietary", { headers }),
-                axios.get(config.BASE_URL + "/api/sleepingHabit", { headers }),
-                axios.get(config.BASE_URL + "/api/religion", { headers }),
-                axios.get(config.BASE_URL + "/api/personalityType", { headers }),
-                axios.get(config.BASE_URL + "/api/pet", { headers }),
-                axios.get(config.BASE_URL + "/api/gender", { headers }),
-            ]);
+            const endpoints = [
+                "lookingfor",
+                "opento",
+                "zodiac",
+                "familyplan",
+                "education",
+                "communicationstyle",
+                "lovestyle",
+                "drinking",
+                "smoking",
+                "workout",
+                "dietary",
+                "sleepingHabit",
+                "religion",
+                "personalityType",
+                "pet",
+                "gender",
+            ];
 
-            setLookingForList(lookingForRes.data.data);
-            setOpenToList(openToRes.data.data);
-            setZodiacList(zodiacRes.data.data);
-            setFamilyPlanList(familyPlanRes.data.data);
-            setEducationList(educationRes.data.data);
-            setCommunicationStyleList(communicationStyleRes.data.data);
-            setLoveStyleList(loveStyleRes.data.data);
-            setDrinkingList(drinkingRes.data.data);
-            setSmokingList(smokingRes.data.data);
-            setWorkoutList(workoutRes.data.data);
-            setDietaryList(dietaryRes.data.data);
-            setSleepingHabitList(sleepingHabitRes.data.data);
-            setReligionList(religionRes.data.data);
-            setPersonalityTypeList(personalityTypeRes.data.data);
-            setPetList(petRes.data.data);
-            setGenderList(genderRes.data.data);
+            const requests = endpoints.map((ep) =>
+                axios.get(`${config.BASE_URL}/api/${ep}`, { headers })
+            );
+
+            const responses = await Promise.all(requests);
+
+            const newLookups = {};
+            endpoints.forEach((key, index) => {
+                newLookups[`${key}List`] = responses[index].data.data;
+            });
+
+            setLookups(newLookups);
         } catch (err) {
-            console.log("Lookup fetch error:", err);
+            console.log("Lookup error:", err);
         }
     };
 
-    const submitPreferences = async () => {
-        if (
-            !gender ||
-            !lookingFor ||
-            !openTo ||
-            !zodiac ||
-            !familyPlan ||
-            !education ||
-            !communicationStyle ||
-            !lovestyle ||
-            !drinking ||
-            !smoking ||
-            !workout ||
-            !dietary ||
-            !sleepingHabit ||
-            !religion ||
-            !personalityType ||
-            !pet
-        ) {
-            Toast.show({ type: "error", text1: "Please fill all fields" });
-            return;
+    const submitPreferences = useCallback(async () => {
+        // VALIDATION
+        for (const key in form) {
+            if (!form[key]) {
+                Toast.show({ type: "error", text1: "Please fill all fields" });
+                return;
+            }
         }
 
         const res = await addUserPreferences(
-            lookingFor,
-            openTo,
-            zodiac,
-            familyPlan,
-            education,
-            communicationStyle,
-            lovestyle,
-            drinking,
-            smoking,
-            workout,
-            dietary,
-            sleepingHabit,
-            religion,
-            personalityType,
-            pet,
-            gender
+            form.lookingFor,
+            form.openTo,
+            form.zodiac,
+            form.familyPlan,
+            form.education,
+            form.communicationStyle,
+            form.lovestyle,
+            form.drinking,
+            form.smoking,
+            form.workout,
+            form.dietary,
+            form.sleepingHabit,
+            form.religion,
+            form.personalityType,
+            form.pet,
+            form.gender,
+            token
         );
 
         if (!res) {
@@ -165,50 +144,153 @@ export default function UserPreferences({ navigation }) {
         }
 
         if (res.status === "success") {
+            const headers = { token };
+            const userDetails = await axios.get(
+                config.BASE_URL + "/user/userdetails",
+                { headers }
+            );
+            await AsyncStorage.setItem("token", token);
+            dispatch(setUser({ token }));
+            dispatch(setUserDetails(userDetails.data));
+
             Toast.show({ type: "success", text1: "Preferences Saved" });
-            navigation.replace("Home");
+
         } else {
             Toast.show({ type: "error", text1: res.error?.code || "Error" });
         }
-    };
+    }, [form, token]);
+
+    const memoLookups = useMemo(() => lookups, [lookups]);
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
             <Text style={styles.title}>Your Preferences</Text>
 
-            {/* ALL DROPDOWNS USING MYSELECT */}
-            <MySelect label="Preferred Gender" value={gender} options={genderList} onChange={setGender} />
+            {/* ---------------- BASIC INFO ---------------- */}
+            <Text style={styles.section}>Basic Information</Text>
 
-            <MySelect label="Looking For" value={lookingFor} options={lookingForList} onChange={setLookingFor} />
+            <MySelect 
+                label="Preferred Gender" 
+                value={form.gender} 
+                options={memoLookups.genderList} 
+                onChange={(v) => updateForm("gender", v)} 
+            />
 
-            <MySelect label="Open To" value={openTo} options={openToList} onChange={setOpenTo} />
+            <MySelect 
+                label="Looking For" 
+                value={form.lookingFor} 
+                options={memoLookups.lookingforList} 
+                onChange={(v) => updateForm("lookingFor", v)} 
+            />
 
-            <MySelect label="Zodiac" value={zodiac} options={zodiacList} onChange={setZodiac} />
+            <MySelect 
+                label="Open To" 
+                value={form.openTo} 
+                options={memoLookups.opentoList} 
+                onChange={(v) => updateForm("openTo", v)} 
+            />
 
-            <MySelect label="Family Plan" value={familyPlan} options={familyPlanList} onChange={setFamilyPlan} />
+            <MySelect
+                label="Zodiac"
+                value={form.zodiac}
+                options={memoLookups.zodiacList}
+                onChange={(v) => updateForm("zodiac", v)}
+            />
 
-            <MySelect label="Education" value={education} options={educationList} onChange={setEducation} />
+            {/* ---------------- LIFESTYLE ---------------- */}
+            <Text style={styles.section}>Lifestyle</Text>
 
-            <MySelect label="Communication Style" value={communicationStyle} options={communicationStyleList} onChange={setCommunicationStyle} />
+            <MySelect 
+                label="Family Plan" 
+                value={form.familyPlan} 
+                options={memoLookups.familyplanList} 
+                onChange={(v) => updateForm("familyPlan", v)} 
+            />
 
-            <MySelect label="Love Style" value={lovestyle} options={loveStyleList} onChange={setLoveStyle} />
+            <MySelect 
+                label="Education" 
+                value={form.education} 
+                options={memoLookups.educationList} 
+                onChange={(v) => updateForm("education", v)} 
+            />
 
-            <MySelect label="Drinking" value={drinking} options={drinkingList} onChange={setDrinking} />
+            <MySelect 
+                label="Workout" 
+                value={form.workout} 
+                options={memoLookups.workoutList} 
+                onChange={(v) => updateForm("workout", v)} 
+            />
 
-            <MySelect label="Smoking" value={smoking} options={smokingList} onChange={setSmoking} />
+            <MySelect 
+                label="Dietary Habit" 
+                value={form.dietary} 
+                options={memoLookups.dietaryList} 
+                onChange={(v) => updateForm("dietary", v)} 
+            />
 
-            <MySelect label="Workout" value={workout} options={workoutList} onChange={setWorkout} />
+            <MySelect 
+                label="Sleeping Habit" 
+                value={form.sleepingHabit} 
+                options={memoLookups.sleepingHabitList} 
+                onChange={(v) => updateForm("sleepingHabit", v)} 
+            />
 
-            <MySelect label="Dietary Habit" value={dietary} options={dietaryList} onChange={setDietary} />
+            {/* ---------------- PERSONALITY ---------------- */}
+            <Text style={styles.section}>Personality</Text>
 
-            <MySelect label="Sleeping Habit" value={sleepingHabit} options={sleepingHabitList} onChange={setSleepingHabit} />
+            <MySelect 
+                label="Communication Style" 
+                value={form.communicationStyle} 
+                options={memoLookups.communicationstyleList} 
+                onChange={(v) => updateForm("communicationStyle", v)} 
+            />
 
-            <MySelect label="Religion" value={religion} options={religionList} onChange={setReligion} />
+            <MySelect 
+                label="Love Style" 
+                value={form.lovestyle} 
+                options={memoLookups.lovestyleList} 
+                onChange={(v) => updateForm("lovestyle", v)} 
+            />
 
-            <MySelect label="Personality Type" value={personalityType} options={personalityTypeList} onChange={setPersonalityType} />
+            <MySelect 
+                label="Personality Type" 
+                value={form.personalityType} 
+                options={memoLookups.personalityTypeList} 
+                onChange={(v) => updateForm("personalityType", v)} 
+            />
 
-            <MySelect label="Pet Preference" value={pet} options={petList} onChange={setPet} />
+            <MySelect 
+                label="Religion" 
+                value={form.religion} 
+                options={memoLookups.religionList} 
+                onChange={(v) => updateForm("religion", v)} 
+            />
 
+            {/* ---------------- HABITS ---------------- */}
+            <Text style={styles.section}>Habits</Text>
+
+            <MySelect 
+                label="Drinking" 
+                value={form.drinking} 
+                options={memoLookups.drinkingList} 
+                onChange={(v) => updateForm("drinking", v)} 
+            />
+
+            <MySelect 
+                label="Smoking" 
+                value={form.smoking} 
+                options={memoLookups.smokingList} 
+                onChange={(v) => updateForm("smoking", v)} 
+            />
+
+            <MySelect 
+                label="Pet Preference" 
+                value={form.pet} 
+                options={memoLookups.petList} 
+                onChange={(v) => updateForm("pet", v)} 
+            />
+
+            {/* SUBMIT */}
             <TouchableOpacity style={styles.button} onPress={submitPreferences}>
                 <Text style={styles.buttonText}>Next</Text>
             </TouchableOpacity>
@@ -230,6 +312,13 @@ const styles = StyleSheet.create({
         fontWeight: "700",
         textAlign: "center",
         marginBottom: 22,
+    },
+    section: {
+        fontSize: 20,
+        fontWeight: "600",
+        marginTop: 25,
+        marginBottom: 10,
+        color: "#444",
     },
     button: {
         backgroundColor: "#2196f3",

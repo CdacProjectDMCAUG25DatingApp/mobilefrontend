@@ -53,7 +53,7 @@ export const serviceGetCandidate = async () => {
 // ---------------------------------------------------
 export const serviceGetCandidatesAgain = async () => {
   try {
-    const token = await AsyncStorage.getItem("token"); // ✅ MUST AWAIT
+    const token = await AsyncStorage.getItem("token"); 
 
     const response = await axios.get(
       config.BASE_URL + "/interactions/getcandidates_again",

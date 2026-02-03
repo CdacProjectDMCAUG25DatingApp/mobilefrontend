@@ -7,7 +7,7 @@ import {
   KeyboardAvoidingView,
   Platform
 } from "react-native";
-import MySelect from "./MySelect";   // adjust path
+import MySelect from "./MySelect";  
 import axios from "axios";
 import config from "../services/config";
 import Toast from "react-native-toast-message";

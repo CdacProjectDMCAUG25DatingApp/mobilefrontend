@@ -9,12 +9,6 @@ export const loginUser = async (email, password) => {
       email,
       password,
     });
-    if (response.data.status === 'success') {
-      await AsyncStorage.setItem(
-        'token',
-        response.data.data.token
-      );
-    }
     return response.data;
   } catch (error) {
     return {

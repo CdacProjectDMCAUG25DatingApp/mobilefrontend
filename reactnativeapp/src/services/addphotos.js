@@ -14,37 +14,44 @@ const toFile = (img) => {
     };
 };
 
-export async function addPhotos({ img0, img1, img2, img3, img4, img5 }) {
+export const addPhotos = async (imgObj,token) => {
     try {
-        const token = await AsyncStorage.getItem("token");
-        
-        const form = new FormData();
-        
-        if (img0) form.append("img0", toFile(img0));
-        if (img1) form.append("img1", toFile(img1));
-        if (img2) form.append("img2", toFile(img2));
-        if (img3) form.append("img3", toFile(img3));
-        if (img4) form.append("img4", toFile(img4));
-        if (img5) form.append("img5", toFile(img5));
-        
-        const response = await axios.post(
-            config.BASE_URL + "/photos/addPhotos",
-            form,
+
+        const formData = new FormData();
+
+        for (let i = 0; i < 6; i++) {
+            const img = imgObj[`img${i}`];
+
+            if (!img || !img.uri) {
+                throw new Error(`Missing img${i}`);
+            }
+
+            formData.append("photos", {
+                uri: img.uri,
+                name: `photo${i}.jpg`,
+                type: "image/jpeg",
+            });
+        }
+
+        const res = await axios.post(
+            config.BASE_URL + "/photos/upload",
+            formData,
             {
                 headers: {
-                    token,
-                    "Content-Type": "multipart/form-data"
-
+                    "Content-Type": "multipart/form-data",
+                    token: token,
                 },
             }
         );
-        return response.data;
-    } catch (error) {
-        console.log("addPhotos error:", error);
-        Toast.show({ type: "error", text1: "Photo upload failed" });
+
+        return res.data;
+
+    } catch (err) {
+        console.log("UPLOAD ERROR:", err);
         return null;
     }
-}
+};
+
 
 export async function fetchPhotos() {
     try {

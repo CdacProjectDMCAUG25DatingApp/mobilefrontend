@@ -10,7 +10,7 @@ import Messages from "../components/Messages";
 
 export default function ChatHome() {
   const [chatUsers, setChatUsers] = useState([]);
-  const [activeChat, setActiveChat] = useState(null); // this decides what to render
+  const [activeChat, setActiveChat] = useState(null); 
   const [refreshing, setRefreshing] = useState(false);
 
   const onRefresh = async () => {

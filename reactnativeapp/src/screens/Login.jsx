@@ -38,23 +38,26 @@ const Login = ({ navigation }) => {
 
       const { token, userdetails, photos, onboarding, name, email: e, mobile } = result.data;
 
-      // Save token
-      await AsyncStorage.setItem("token", token);
 
-      dispatch(setUser({ token, name, email: e, mobile }));
-      dispatch(setUserDetails(userdetails || {}));
-      dispatch(setPhotos(photos || []));
+
 
       Alert.alert("Success", "Login Successful");
 
       if (onboarding.needs_profile)
-        return navigation.replace("CreateProfile");
+        return navigation.replace("CreateProfile",{token:token});
 
       if (onboarding.needs_photos)
-        return navigation.replace("AddPhotos");
+        return navigation.replace("AddPhotos",{token:token});
 
       if (onboarding.needs_preferences)
-        return navigation.replace("UserPreferences");  
+        return navigation.replace("UserPreferences",{token:token});
+
+       // Save token
+      await AsyncStorage.setItem("token", token);
+      dispatch(setUser({ token, name, email: e, mobile }));
+      dispatch(setUserDetails(userdetails || {}));
+      dispatch(setPhotos(photos || []));
+
 
     } catch (ex) {
       console.log("Login error:", ex);

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import {
   View,
   ScrollView,
@@ -29,10 +29,11 @@ import ReportModal from "../components/ReportModal";
 
 import { setPhotos } from "../redux/photosSlice";
 import { setUserDetails } from "../redux/userDetailsSlice";
-import { updateUserDetails } from "../redux/userDetailsThunks";
+import { loadPhotos, updateUserDetails } from "../redux/userDetailsThunks";
 import { useNavigation, useRoute } from "@react-navigation/native";
 
 const ProfileView = ({ editable: componentEditable, profileData: componentData, photos: componentPhotos }) => {
+
   const route = useRoute();
   const params = route.params || {};
 
@@ -41,101 +42,80 @@ const ProfileView = ({ editable: componentEditable, profileData: componentData, 
 
   const isEditable = componentEditable ?? params.propEditable ?? false;
 
-  // Redux data
+  // ---------------- REDUX STATE ----------------
   const reduxUser = useSelector(state => state.userDetails.data);
-  const finalData = componentData ?? params.profileData ?? reduxUser;
-  console.log(finalData)
   const reduxPhotos = useSelector(state => state.photos.data);
-  const finalPhotos = componentPhotos ?? params.photos ?? reduxPhotos;
+
+  // ---------------- FINAL DATA MEMO ----------------
+  const finalData = useMemo(
+    () => componentData ?? params.profileData ?? reduxUser,
+    [componentData, params.profileData, reduxUser]
+  );
+
+  const finalPhotos = useMemo(
+    () => componentPhotos ?? params.photos ?? reduxPhotos,
+    [componentPhotos, params.photos, reduxPhotos]
+  );
+
   if (!finalData || finalPhotos.length === 0) return null;
 
-
-
-
-  // ---------------------------------------------------------
-  // LOCAL STATE
-  // ---------------------------------------------------------
+  // ---------------- LOCAL STATE ----------------
   const [genderList, setGenderList] = useState([]);
   const [reportReasons, setReportReasons] = useState([]);
 
   const [profile, setProfile] = useState({});
   const [original, setOriginal] = useState({});
   const [dirty, setDirty] = useState({});
-
   const [reportVisible, setReportVisible] = useState(false);
 
-
-  // ---------------------------------------------------------
-  // LOAD INITIAL API DATA
-  // ---------------------------------------------------------
+  // ---------------- LOAD GENDER + REPORT REASONS ----------------
   useEffect(() => {
     (async () => {
       const token = await config.getToken("token");
       const headers = { token };
 
-      const [gendersRes, reasonsRes] = await Promise.all([
-        axios.get(config.BASE_URL + "/api/gender", { headers }),
-        axios.get(config.BASE_URL + "/api/report-reasons", { headers })
-      ]);
+      try {
+        const [gendersRes, reasonsRes] = await Promise.all([
+          axios.get(config.BASE_URL + "/api/gender", { headers }),
+          axios.get(config.BASE_URL + "/api/report-reasons", { headers })
+        ]);
 
-      setGenderList(gendersRes.data.data);
-      setReportReasons(reasonsRes.data.data);
+        setGenderList(gendersRes.data.data);
+        setReportReasons(reasonsRes.data.data);
+      } catch (err) {
+        console.log("Lookup load failed:", err);
+      }
     })();
   }, []);
 
-  //Block User
-  const handleBlock = async () => {
-    try {
-      const token = await config.getToken("token");
-      await axios.post(
-        config.BASE_URL + "/settings/block",
-        { blocked_id: finalData?.token },
-        { headers: { token } }
-      );
-      Toast.show({ type: "success", text1: "User Blocked" });
-    } catch (err) {
-      console.log("Block failed:", err?.response?.data || err);
-      Toast.show({ type: "error", text1: "Failed to block user" });
-    }
-  };
-
-  // ---------------------------------------------------------
-  // INITIALIZE PROFILE
-  // ---------------------------------------------------------
+  // ---------------- INITIALIZE PROFILE ----------------
   useEffect(() => {
-    setProfile(prev => ({
+    const merged = {
       ...finalData,
       image_prompt: finalPhotos?.[0]?.prompt || "",
-    }));
-    setOriginal({
-      ...finalData,
-      image_prompt: finalPhotos?.[0]?.prompt || "",
-    });
+    };
+
+    setProfile(merged);
+    setOriginal(merged);
     setDirty({});
   }, [finalData, finalPhotos]);
 
-
-  // ---------------------------------------------------------
-  // CHANGE HANDLER
-  // ---------------------------------------------------------
-  const handleChange = (field, value) => {
+  // ---------------- HANDLE CHANGE ----------------
+  const handleChange = useCallback((field, value) => {
     setProfile(prev => ({ ...prev, [field]: value }));
 
-    if (original[field] !== value) {
-      setDirty(prev => ({ ...prev, [field]: value }));
-    } else {
-      setDirty(prev => {
-        const copy = { ...prev };
-        delete copy[field];
-        return copy;
-      });
-    }
-  };
+    setDirty(prev => {
+      if (original[field] !== value) {
+        return { ...prev, [field]: value };
+      }
+      const copy = { ...prev };
+      delete copy[field];
+      return copy;
+    });
+  }, [original]);
 
-  // ---------------------------------------------------------
-  // SAVE HANDLER
-  // ---------------------------------------------------------
-  const handleUpdate = async () => {
+  // ---------------- SAVE PROFILE ----------------
+  const handleUpdate = useCallback(async () => {
     if (!Object.keys(dirty).length) return;
 
     const token = await config.getToken("token");
@@ -170,38 +150,45 @@ const ProfileView = ({ editable: componentEditable, profileData: componentData, 
       }
 
       dispatch(setUserDetails({ ...finalData, ...dirty }));
+
       setOriginal(profile);
       setDirty({});
-
       Toast.show({ type: "success", text1: "Profile Updated" });
 
     } catch (err) {
+      console.log("Profile update failed:", err);
       Toast.show({ type: "error", text1: "Update failed" });
     }
-  };
+  }, [dirty, finalPhotos, finalData, profile]);
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     setProfile(original);
     setDirty({});
-  };
+  }, [original]);
 
-  const menuStyles = {
-    optionsContainer: {
-      backgroundColor: "#1c1c1c",
-      borderRadius: 6,
-      width: 140,
-      paddingVertical: 6,
-    },
-    optionText: {
-      color: "white",
-      padding: 10,
-      fontSize: 15,
-    },
-  };
+  // ---------------- BLOCK USER ----------------
+  const handleBlock = useCallback(async () => {
+    try {
+      const token = await config.getToken("token");
+      await axios.post(
+        config.BASE_URL + "/settings/block",
+        { blocked_id: finalData?.token },
+        { headers: { token } }
+      );
+      Toast.show({ type: "success", text1: "User Blocked" });
+    } catch (err) {
+      console.log("Block failed:", err);
+      Toast.show({ type: "error", text1: "Failed to block user" });
+    }
+  }, [finalData]);
 
-  // ---------------------------------------------------------
-  // PROFILE BLOCK GROUPS
-  // ---------------------------------------------------------
+  // ---------------- MEMO PHOTO URL ----------------
+  const mainPhoto = useMemo(
+    () => config.urlConverter(finalPhotos[1]?.photo_url),
+    [finalPhotos]
+  );
+
+  // ---------------- MEMO BLOCKS ----------------
   const blocks = useMemo(() => [
     {
       dob: finalData.dob,
@@ -233,29 +220,31 @@ const ProfileView = ({ editable: componentEditable, profileData: componentData, 
     },
   ], [finalData]);
 
-  const mainPhoto = useMemo(() => {
-    return config.urlConverter(finalPhotos[1]?.photo_url);
-  }, [finalPhotos]);
-
-
-  // ---------------------------------------------------------
-  // UI
-  // ---------------------------------------------------------
+  // ---------------- UI ----------------
   return (
     <View style={styles.pageContainer}>
 
-      {/* HEADER */}
       {!isEditable && (
         <View style={styles.actionBar}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Ionicons name="chevron-back" size={28} color="white" />
           </TouchableOpacity>
+
           <Menu>
             <MenuTrigger>
               <Ionicons name="ellipsis-vertical" size={26} color="white" />
             </MenuTrigger>
 
-            <MenuOptions customStyles={menuStyles}>
+            <MenuOptions
+              customStyles={{
+                optionsContainer: {
+                  backgroundColor: "#1c1c1c",
+                  borderRadius: 6,
+                  width: 140
+                },
+                optionText: { color: "white" }
+              }}
+            >
               <MenuOption onSelect={() => setReportVisible(true)} text="Report" />
               <MenuOption onSelect={handleBlock} text="Block" />
             </MenuOptions>
@@ -269,8 +258,11 @@ const ProfileView = ({ editable: componentEditable, profileData: componentData, 
         <View style={styles.card}>
           <View style={styles.photoContainer}>
             <PhotoInput
+              mode="replace"
               imageUrl={mainPhoto}
               disabled={!isEditable}
+              photo_id={finalPhotos[1]?.photo_id}
+              onReplaceSuccess={() => dispatch(loadPhotos())}
             />
           </View>
 
@@ -285,7 +277,6 @@ const ProfileView = ({ editable: componentEditable, profileData: componentData, 
             onChangeText={v => handleChange("bio", v)}
           />
 
-          {/* HEIGHT / WEIGHT / GENDER */}
           <View style={styles.row}>
 
             <View style={styles.col}>
@@ -293,8 +284,8 @@ const ProfileView = ({ editable: componentEditable, profileData: componentData, 
               <TextInput
                 style={styles.input}
                 keyboardType="numeric"
-                value={profile.height?.toString() || ""}
                 editable={isEditable}
+                value={profile.height?.toString() || ""}
                 onChangeText={v => handleChange("height", v)}
               />
             </View>
@@ -304,8 +295,8 @@ const ProfileView = ({ editable: componentEditable, profileData: componentData, 
               <TextInput
                 style={styles.input}
                 keyboardType="numeric"
-                value={profile.weight?.toString() || ""}
                 editable={isEditable}
+                value={profile.weight?.toString() || ""}
                 onChangeText={v => handleChange("weight", v)}
               />
             </View>
@@ -347,7 +338,6 @@ const ProfileView = ({ editable: componentEditable, profileData: componentData, 
 
         </View>
 
-        {/* PROFILE BLOCKS */}
         {blocks.map((grp, i) => (
           <ProfileViewBlock
             key={i}
@@ -355,13 +345,11 @@ const ProfileView = ({ editable: componentEditable, profileData: componentData, 
             photos={finalPhotos}
             editable={isEditable}
             index={Math.min(i + 1, finalPhotos.length - 1)}
-            reverse={i % 2 === 1}
           />
         ))}
 
       </ScrollView>
 
-      {/* REPORT MODAL */}
       {reportVisible && (
         <ReportModal
           visible={reportVisible}
@@ -376,10 +364,7 @@ const ProfileView = ({ editable: componentEditable, profileData: componentData, 
   );
 };
 
-export default ProfileView;
-
-
-/* ------------------ STYLES ------------------ */
+export default React.memo(ProfileView);
 
 const styles = StyleSheet.create({
   actionBar: {

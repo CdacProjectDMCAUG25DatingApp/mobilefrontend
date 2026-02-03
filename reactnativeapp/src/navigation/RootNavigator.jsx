@@ -15,7 +15,6 @@ export default function RootNavigator() {
   const token = useSelector((state) => state.user.token);
 
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     AsyncStorage.getItem("token").then((t) => {
       if (t) dispatch(setUser({ token: t })); // AUTO LOGIN

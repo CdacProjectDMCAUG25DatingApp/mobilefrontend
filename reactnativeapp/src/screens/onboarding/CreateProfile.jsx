@@ -1,5 +1,3 @@
-// src/screens/Profile/CreateProfile.js
-
 import React, { useEffect, useState } from "react";
 import {
     View,
@@ -21,7 +19,8 @@ import { addUserProfile } from "../../services/userprofile";
 // Custom Select Component
 import MySelect from "../../components/MySelect";
 
-export default function CreateProfile({ navigation }) {
+export default function CreateProfile({ navigation,route }) {
+    const token = route.params.token
 
     // Form Data
     const [profile, setProfile] = useState({
@@ -51,7 +50,6 @@ export default function CreateProfile({ navigation }) {
     // -------- FETCH LOOKUP DATA --------
     useEffect(() => {
         (async () => {
-            const token = await AsyncStorage.getItem("token");
             const headers = { token };
 
             try {
@@ -121,7 +119,8 @@ export default function CreateProfile({ navigation }) {
             dob,
             education,
             tagLine,
-            jobIndustry
+            jobIndustry,
+            token
         );
 
         if (!res) return;
@@ -135,25 +134,9 @@ export default function CreateProfile({ navigation }) {
         }
 
         Toast.show({ type: "success", text1: "Profile Completed" });
-
-        const token = await AsyncStorage.getItem("token");
-        const headers = { token };
-
-        const photos = await axios.get(config.BASE_URL + "/photos/userphotos", {
-            headers,
+        navigation.replace("AddPhotos",{
+          token:token
         });
-
-        if (photos.data.data.length === 6) {
-            const prefs = await axios.get(config.BASE_URL + "/user/userpreferences", {
-                headers,
-            });
-
-            return prefs.data.data.length === 1
-                ? navigation.replace("Home")
-                : navigation.replace("UserPreferencaes");
-        }
-
-        navigation.replace("AddPhotos");
     };
 
     // ---------- UI ----------
